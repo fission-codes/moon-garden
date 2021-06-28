@@ -1,4 +1,8 @@
-# elm-package generated files
-elm-stuff
-# elm-repl generated files
-repl-temp-*
+/.vscode/
+/build
+/elm-stuff
+/node_modules
+/src/Library/Tailwind.elm
+/web_modules
+
+/fission.yaml
