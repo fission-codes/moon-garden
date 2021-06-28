@@ -24,7 +24,7 @@ main =
 view : Model -> Html Msg
 view () =
   h1 []
-      [ text "Hello world" ]
+      [ text "Welcome to the Fission Digital Garden 🌱" ]
 
 
 subscriptions : Model -> Sub Msg
