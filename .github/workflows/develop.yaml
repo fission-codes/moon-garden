@@ -26,16 +26,6 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-unstable
 
-      - name: Cache pnpm modules
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-pnpm-modules
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-      
       - name: Cache elm home
         uses: actions/cache@v2
         env:
@@ -43,15 +33,6 @@ jobs:
         with:
           path: ~/.elm
           key: ${{ runner.os }}-elm-home-${{ hashFiles('**/elm.json') }}
-
-      - name: Install Dependencies
-        run: nix-shell --run "just install-deps"
-
-      - name: Build
-        run: nix-shell --run "just production-build"
-      
-      - name: Switch to development publish
-        run: mv fission.yaml fission-production.yaml; mv fission-develop.yaml fission.yaml
 
       - name: Publish to Fission
         uses: fission-suite/publish-action@v1
