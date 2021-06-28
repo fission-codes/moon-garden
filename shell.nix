@@ -41,11 +41,4 @@ in
       deps.fun
       tasks
     ];
-
-    shellHook = ''
-      export LANG=C.UTF8
-
-      echo "🌈✨ Welcome to the glorious... "
-      ${pkgs.figlet}/bin/figlet "Fission Drive Env" | lolcat -a -s 50
-    '';
   }
