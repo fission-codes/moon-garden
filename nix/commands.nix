@@ -42,7 +42,7 @@
 
     run = task "run" "${dev-server.bin} & ${watch.bin}";
 
-    hot = task "hot" "${hot-server.bin} & ${watch-hot.bin}";
+    hot = task "hot" "${hot-server.bin}"; # & ${watch-hot.bin}";
 
     apply-config = task "apply-config" ''
       echo "🎛  Applying config \`config/${config}.json\`"
@@ -94,7 +94,7 @@
 
     hot-server = task "hot-server" ''
       echo "🔥  Start a hot-reloading elm-live server at http://localhost:8000"
-      ${elm-live} ${src_dir}/Main.elm --hot --port=8000 --pushstate --dir=build -- --output=${dist_dir}/application.js --debug
+      ${elm-live} ${src_dir}/Main.elm --hot --port=8000 --pushstate -- --output=${dist_dir}/application.js --debug
     '';
 
     install-deps = task "install-deps" ''
@@ -289,14 +289,14 @@
     ${watch-js.bin}
    '';
 
-   watch-hot = task "watch-hot" ''
-     echo "👀  Watching for changes"
-     ${watch-css-src.bin} & \
-     ${watch-css-sys.bin} & \
-     ${watch-html.bin} & \
-     ${watch-images.bin} & \
-     ${watch-js.bin}
-   '';
+  #  watch-hot = task "watch-hot" ''
+  #    echo "👀  Watching for changes"
+  #    ${watch-css-src.bin} & \
+  #    ${watch-css-sys.bin} & \
+  #    ${watch-html.bin} & \
+  #    ${watch-images.bin} & \
+  #    ${watch-js.bin}
+  #  '';
 
    watch-css-src = task "watch-css-src" ''
      ${watchexec} -p -w ${src_dir}/Css -e "css" -- ${css-large.bin}
@@ -350,7 +350,7 @@
       production-service-worker
 
       watch
-      watch-hot
+      # watch-hot
       watch-css-src
       watch-css-sys
       watch-elm

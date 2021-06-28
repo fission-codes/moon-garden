@@ -4449,6 +4449,7 @@ var $elm$core$Set$toList = function (_v0) {
 	return $elm$core$Dict$keys(dict);
 };
 var $elm$core$Basics$GT = {$: 'GT'};
+var $author$project$Main$NoOp = {$: 'NoOp'};
 var $elm$core$Result$Err = function (a) {
 	return {$: 'Err', a: a};
 };
@@ -5157,7 +5158,7 @@ var $elm$core$Task$perform = F2(
 			$elm$core$Task$Perform(
 				A2($elm$core$Task$map, toMessage, task)));
 	});
-var $elm$browser$Browser$element = _Browser_element;
+var $elm$browser$Browser$application = _Browser_application;
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $elm$core$Platform$Sub$batch = _Platform_batch;
@@ -5168,23 +5169,35 @@ var $author$project$Main$subscriptions = function (model) {
 var $elm$html$Html$h1 = _VirtualDom_node('h1');
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $author$project$Main$body = A2(
+	$elm$html$Html$h1,
+	_List_Nil,
+	_List_fromArray(
+		[
+			$elm$html$Html$text('Welcome to the Fission Digital Garden! 🌱')
+		]));
 var $author$project$Main$view = function (_v0) {
-	return A2(
-		$elm$html$Html$h1,
-		_List_Nil,
-		_List_fromArray(
-			[
-				$elm$html$Html$text('Welcome to the Fission Digital Garden 🌱')
-			]));
+	return {
+		body: _List_fromArray(
+			[$author$project$Main$body]),
+		title: 'Fission Digital Garden'
+	};
 };
-var $author$project$Main$main = $elm$browser$Browser$element(
+var $author$project$Main$main = $elm$browser$Browser$application(
 	{
-		init: function (_v0) {
-			return _Utils_Tuple2(_Utils_Tuple0, $elm$core$Platform$Cmd$none);
+		init: F3(
+			function (_v0, _v1, _v2) {
+				return _Utils_Tuple2(_Utils_Tuple0, $elm$core$Platform$Cmd$none);
+			}),
+		onUrlChange: function (_v3) {
+			return $author$project$Main$NoOp;
+		},
+		onUrlRequest: function (_v4) {
+			return $author$project$Main$NoOp;
 		},
 		subscriptions: $author$project$Main$subscriptions,
 		update: F2(
-			function (_v1, _v2) {
+			function (_v5, _v6) {
 				return _Utils_Tuple2(_Utils_Tuple0, $elm$core$Platform$Cmd$none);
 			}),
 		view: $author$project$Main$view
