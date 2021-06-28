@@ -24,11 +24,6 @@ let
       pkgs.nodejs-14_x
       pkgs.nodePackages.pnpm
     ];
-
-    fun = [
-      pkgs.figlet
-      pkgs.lolcat
-    ];
   };
 
 in
@@ -38,7 +33,6 @@ in
       deps.tools
       deps.elm
       deps.node
-      deps.fun
       tasks
     ];
   }
