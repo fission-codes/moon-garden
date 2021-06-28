@@ -12,5 +12,5 @@ nix-shell
 
 Elm development server:
 ```
-hot-server
+hot
 ```
