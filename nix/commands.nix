@@ -94,7 +94,7 @@
 
     hot-server = task "hot-server" ''
       echo "🔥  Start a hot-reloading elm-live server at http://localhost:8000"
-      ${elm-live} ${src_dir}/Application/Main.elm --hot --port=8000 --pushstate --dir=build -- --output=${dist_dir}/application.js --debug
+      ${elm-live} ${src_dir}/Main.elm --hot --port=8000 --pushstate --dir=build -- --output=${dist_dir}/application.js --debug
     '';
 
     install-deps = task "install-deps" ''
