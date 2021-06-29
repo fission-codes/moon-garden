@@ -20,5 +20,8 @@
     "tailwindcss": "^2.2.4",
     "vite": "^2.3.8",
     "vite-plugin-elm": "^2.4.0"
+  },
+  "dependencies": {
+    "webnative": "^0.26.0"
   }
 }

@@ -1,7 +1,7 @@
 @font-face {
     font-family: 'Courier Prime';
-    src: url('CourierPrime-BoldItalic.woff2') format('woff2'),
-        url('CourierPrime-BoldItalic.woff') format('woff');
+    src: url('../fonts/CourierPrime-BoldItalic.woff2') format('woff2'),
+        url('../fonts/CourierPrime-BoldItalic.woff') format('woff');
     font-weight: bold;
     font-style: italic;
     font-display: swap;
@@ -9,8 +9,8 @@
 
 @font-face {
     font-family: 'Courier Prime';
-    src: url('CourierPrime-Italic.woff2') format('woff2'),
-        url('CourierPrime-Italic.woff') format('woff');
+    src: url('../fonts/CourierPrime-Italic.woff2') format('woff2'),
+        url('../fonts/CourierPrime-Italic.woff') format('woff');
     font-weight: normal;
     font-style: italic;
     font-display: swap;
@@ -18,8 +18,8 @@
 
 @font-face {
     font-family: 'Courier Prime';
-    src: url('CourierPrime-Regular.woff2') format('woff2'),
-        url('CourierPrime-Regular.woff') format('woff');
+    src: url('../fonts/CourierPrime-Regular.woff2') format('woff2'),
+        url('../fonts/CourierPrime-Regular.woff') format('woff');
     font-weight: normal;
     font-style: normal;
     font-display: swap;
@@ -27,8 +27,8 @@
 
 @font-face {
     font-family: 'Courier Prime';
-    src: url('CourierPrime-Bold.woff2') format('woff2'),
-        url('CourierPrime-Bold.woff') format('woff');
+    src: url('../fonts/CourierPrime-Bold.woff2') format('woff2'),
+        url('../fonts/CourierPrime-Bold.woff') format('woff');
     font-weight: bold;
     font-style: normal;
     font-display: swap;
@@ -36,8 +36,8 @@
 
 @font-face {
     font-family: 'Lora';
-    src: url('Lora-Italic.woff2') format('woff2'),
-        url('Lora-Italic.woff') format('woff');
+    src: url('../fonts/Lora-Italic.woff2') format('woff2'),
+        url('../fonts/Lora-Italic.woff') format('woff');
     font-weight: 1 999;
     font-style: italic;
     font-display: swap;
@@ -45,8 +45,8 @@
 
 @font-face {
     font-family: 'Lora';
-    src: url('Lora-Regular.woff2') format('woff2'),
-        url('Lora-Regular.woff') format('woff');
+    src: url('../fonts/Lora-Regular.woff2') format('woff2'),
+        url('../fonts/Lora-Regular.woff') format('woff');
     font-weight: 1 999;
     font-style: normal;
     font-display: swap;
@@ -54,8 +54,8 @@
 
 @font-face {
     font-family: 'Karla';
-    src: url('Karla-Italic.woff2') format('woff2'),
-        url('Karla-Italic.woff') format('woff');
+    src: url('../fonts/Karla-Italic.woff2') format('woff2'),
+        url('../fonts/Karla-Italic.woff') format('woff');
     font-weight: 1 999;
     font-style: italic;
     font-display: swap;
@@ -63,8 +63,8 @@
 
 @font-face {
     font-family: 'Karla';
-    src: url('Karla-Regular.woff2') format('woff2'),
-        url('Karla-Regular.woff') format('woff');
+    src: url('../fonts/Karla-Regular.woff2') format('woff2'),
+        url('../fonts/Karla-Regular.woff') format('woff');
     font-weight: 1 999;
     font-style: normal;
     font-display: swap;
