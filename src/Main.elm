@@ -1,7 +1,7 @@
 module Main exposing (main)
 
 import Browser
-import Html exposing (Html, h1, pre, text)
+import Html.Styled as Html exposing (Html)
 
 
 type alias Model =
@@ -31,14 +31,14 @@ main =
 view : Model -> Browser.Document Msg
 view () =
     { title = "Fission Digital Garden"
-    , body = [ body ]
+    , body = [ Html.toUnstyled body ]
     }
 
 
 body : Html Msg
 body =
-    h1 []
-        [ text "Welcome to the Fission Digital Garden! 🌱" ]
+    Html.h1 []
+        [ Html.text "Welcome to the Fission Digital Garden! 🌱" ]
 
 
 subscriptions : Model -> Sub Msg

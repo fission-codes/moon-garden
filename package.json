@@ -8,10 +8,16 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "start": "vite -c vite.config.js src",
-    "build": "vite build -c vite.config.js src --outDir ../build"
+    "start": "yarn gen:css && vite",
+    "build": "yarn gen:css && vite build --outDir build",
+    "gen:css": "node tailwind-modules.js"
   },
   "devDependencies": {
+    "autoprefixer": "^10.2.6",
+    "elm-tailwind-modules": "^0.3.2",
+    "postcss": "^8.3.5",
+    "postcss-import": "^14.0.2",
+    "tailwindcss": "^2.2.4",
     "vite": "^2.3.8",
     "vite-plugin-elm": "^2.4.0"
   }
