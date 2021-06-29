@@ -23,6 +23,8 @@ let
     node = [
       pkgs.nodejs-14_x
       pkgs.nodePackages.pnpm
+
+      pkgs.yarn
     ];
   };
 
@@ -35,4 +37,8 @@ in
       deps.node
       tasks
     ];
+
+    shellHook = ''
+      ${pkgs.yarn}/bin/yarn install
+    '';
   }
