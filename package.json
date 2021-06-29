@@ -1,0 +1,17 @@
+{
+  "name": "digital-garden",
+  "version": "0.0.1",
+  "description": "A digital garden built on the fission platform!",
+  "main": "src/index.html",
+  "repository": "https://github.com/fission-suite/digital-garden",
+  "author": "Brooklyn Zelenka <brooklyn@fission.codes>, Philipp Krüger <philipp.krueger1@gmail.com>",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "start": "vite -c vite.config.js src"
+  },
+  "devDependencies": {
+    "vite": "^2.3.8",
+    "vite-plugin-elm": "^2.4.0"
+  }
+}

@@ -1,28 +1,31 @@
 module Main exposing (main)
 
-
 import Browser
-import Html exposing (Html, text, pre, h1)
+import Html exposing (Html, h1, pre, text)
 
 
-type alias Model = ()
-type alias Flags = ()
+type alias Model =
+    ()
 
 
-type Msg = NoOp
+type alias Flags =
+    ()
+
+
+type Msg
+    = NoOp
 
 
 main : Program Flags Model Msg
 main =
-  Browser.application
-      { init = \_ _ _ -> ((), Cmd.none)
-      , update = \_ _ -> ((), Cmd.none)
-      , subscriptions = subscriptions
-      , view = view
-
-      , onUrlChange = \_ -> NoOp
-      , onUrlRequest = \_ -> NoOp
-      }
+    Browser.application
+        { init = \_ _ _ -> ( (), Cmd.none )
+        , update = \_ _ -> ( (), Cmd.none )
+        , subscriptions = subscriptions
+        , view = view
+        , onUrlChange = \_ -> NoOp
+        , onUrlRequest = \_ -> NoOp
+        }
 
 
 view : Model -> Browser.Document Msg
@@ -31,12 +34,13 @@ view () =
     , body = [ body ]
     }
 
+
 body : Html Msg
 body =
-  h1 []
-      [ text "Welcome to the Fission Digital Garden! 🌱" ]
+    h1 []
+        [ text "Welcome to the Fission Digital Garden! 🌱" ]
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-  Sub.none
+    Sub.none
