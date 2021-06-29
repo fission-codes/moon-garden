@@ -7,7 +7,7 @@ import tailwindcss from "tailwindcss"
 import { promises as fs } from "fs"
 
 const etmConfig = {
-    directory: "src/Generated",
+    directory: "gen/",
     moduleName: "Tailwind",
     generateDocumentation: true,
     // custom stuff

@@ -2,6 +2,8 @@ module Main exposing (main)
 
 import Browser
 import Html.Styled as Html exposing (Html)
+import Html.Styled.Attributes exposing (css)
+import Tailwind.Utilities exposing (..)
 
 
 type alias Model =
@@ -37,7 +39,7 @@ view () =
 
 body : Html Msg
 body =
-    Html.h1 []
+    Html.h1 [ css [ font_title, text_4xl, font_thin ] ]
         [ Html.text "Welcome to the Fission Digital Garden! 🌱" ]
 
 
