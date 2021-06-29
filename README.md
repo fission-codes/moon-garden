@@ -20,11 +20,6 @@ nix-shell
 
 Ensure that your local enviornment has the correct node, with a tool such as [nvm](https://github.com/nvm-sh/nvm).
 
-``` sh
-yarn install
-yarn start
-```
-
 ## Node Dependencies
 
 Install/update Node dependencies:
