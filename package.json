@@ -8,7 +8,8 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "start": "vite -c vite.config.js src"
+    "start": "vite -c vite.config.js src",
+    "build": "vite build -c vite.config.js src --outDir ../build"
   },
   "devDependencies": {
     "vite": "^2.3.8",
