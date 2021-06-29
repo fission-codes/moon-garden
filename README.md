@@ -6,7 +6,7 @@ A simple digital garden / second brain, powered by [Fission's Webnative SDK](htt
 
 ### Nix
 
-if you have a [Nix](https://nixos.org/guides/install-nix.html), simply enter the shell:
+With [Nix](https://nixos.org/guides/install-nix.html), simply enter the shell:
 
 ``` sh
 nix-shell
@@ -33,3 +33,8 @@ yarn install
 ``` sh
 yarn start
 ```
+
+### Manual
+
+* Install [Node](https://nodejs.org/en/) 16.x
+* Install [Yarn](https://yarnpkg.com/) 1.22.x
