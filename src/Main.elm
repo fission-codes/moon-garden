@@ -32,7 +32,7 @@ main =
 
 view : Model -> Browser.Document Msg
 view () =
-    { title = "Fission Digital Garden"
+    { title = "🌛 Moon Garden 🌱"
     , body = [ Html.toUnstyled body ]
     }
 
@@ -54,14 +54,14 @@ body =
                 , font_thin
                 ]
             ]
-            [ Html.text "Welcome to the Fission Digital Garden! 🌱" ]
+            [ Html.text "Welcome to 🌛 Moon Garden! 🌱" ]
         , Html.p
             [ css
                 [ font_body
                 , mt_6
                 ]
             ]
-            [ Html.text "Please take a seat and plant a seed." ]
+            [ Html.text "A digital garden / second brain, built on Fission. Please take a seat and plant a seed." ]
         ]
 
 
