@@ -39,8 +39,30 @@ view () =
 
 body : Html Msg
 body =
-    Html.h1 [ css [ font_title, text_4xl, font_thin ] ]
-        [ Html.text "Welcome to the Fission Digital Garden! 🌱" ]
+    Html.main_
+        [ css
+            [ p_6
+            , text_bluegray_800
+            , bg_beige_100
+            , flex_grow
+            ]
+        ]
+        [ Html.h1
+            [ css
+                [ font_title
+                , text_4xl
+                , font_thin
+                ]
+            ]
+            [ Html.text "Welcome to the Fission Digital Garden! 🌱" ]
+        , Html.p
+            [ css
+                [ font_body
+                , mt_6
+                ]
+            ]
+            [ Html.text "Please take a seat and plant a seed." ]
+        ]
 
 
 subscriptions : Model -> Sub Msg
