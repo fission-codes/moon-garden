@@ -12,18 +12,15 @@ import Tailwind.Utilities exposing (..)
 test : msg -> Html msg
 test noOp =
     -- signinScreen { onClickSignIn = noOp }
-    -- loadingScreen { message = "Spinning violently around the y-axis..." }
+    -- loadingScreen { message = "Spinning violently around the y-axis...", isError = True }
     appShellSidebar
         { navigation =
             List.concat
-                [ [ button
-                        [ css
-                            [ leafButtonStyle
-                            , py_3
-                            ]
-                        ]
-                        [ text "Create New Note" ]
-                  , searchInput [ mt_8 ]
+                [ [ buttonCreateNewNote { onClick = noOp }
+                  , searchInput
+                        { styles = [ mt_8 ]
+                        , onInput = \_ -> noOp
+                        }
                   ]
                 , List.map
                     (\result ->
@@ -45,7 +42,7 @@ test noOp =
         }
 
 
-loadingScreen : { message : String } -> Html msg
+loadingScreen : { message : String, isError : Bool } -> Html msg
 loadingScreen element =
     appShellCentered
         [ moonGardenTitle
@@ -59,13 +56,13 @@ loadingScreen element =
                 , space_y_2
                 ]
             ]
-            [ span
-                [ css
-                    [ text_2xl
-                    , animate_spin
-                    ]
-                ]
-                [ text "🌕" ]
+            [ if element.isError then
+                span [ css [ text_2xl ] ]
+                    [ text "😳" ]
+
+              else
+                span [ css [ text_2xl, animate_spin ] ]
+                    [ text "🌕" ]
             , span [] [ text element.message ]
             ]
         ]
@@ -221,19 +218,24 @@ moonGardenTitle =
         [ text "Moon Garden" ]
 
 
-searchInput : List Css.Style -> Html msg
-searchInput styles =
+searchInput :
+    { onInput : String -> msg
+    , styles : List Css.Style
+    }
+    -> Html msg
+searchInput element =
     div
         [ css
             [ relative
             , flex
             , flex_col
-            , Css.batch styles
+            , Css.batch element.styles
             ]
         ]
         [ input
             [ type_ "text"
             , placeholder "Type to Search"
+            , Events.onInput element.onInput
             , css
                 [ px_4
                 , py_3
@@ -327,3 +329,15 @@ leafButtonStyle =
             , Css.property "box-shadow" "0 0 0 0 #95A25C"
             ]
         ]
+
+
+buttonCreateNewNote : { onClick : msg } -> Html msg
+buttonCreateNewNote element =
+    button
+        [ Events.onClick element.onClick
+        , css
+            [ leafButtonStyle
+            , py_3
+            ]
+        ]
+        [ text "Create New Note" ]
