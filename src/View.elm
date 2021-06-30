@@ -403,7 +403,11 @@ autoresizeTextarea element =
         ]
 
 
-wikilinksSection : { styles : List Css.Style } -> Html msg
+wikilinksSection :
+    { styles : List Css.Style
+    , wikilinks : List (Html msg)
+    }
+    -> Html msg
 wikilinksSection element =
     section
         []
@@ -416,4 +420,45 @@ wikilinksSection element =
                 ]
             ]
             [ text "Wikilinks" ]
+        , ul
+            [ css
+                [ flex
+                , flex_col
+                , mt_3
+                , space_y_1
+                , items_start
+                ]
+            ]
+            element.wikilinks
         ]
+
+
+wikilinkExisting : { label : String, link : String } -> Html msg
+wikilinkExisting element =
+    a
+        [ href element.link
+        , css
+            [ inline
+            , text_bluegray_800
+            , font_body
+            , p_2
+            , relative
+            , z_0
+            , Css.hover
+                [ Css.pseudoElement "before"
+                    [ top_2 ]
+                ]
+            , Css.pseudoElement "before"
+                [ Css.property "content" "''"
+                , Css.property "z-index" "-1"
+                , absolute
+                , bg_moon_200
+                , bottom_2
+                , inset_x_2
+                , Css.property "top" "56%"
+                , transition_all
+                , duration_200
+                ]
+            ]
+        ]
+        [ text element.label ]
