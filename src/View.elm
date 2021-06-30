@@ -9,10 +9,15 @@ import Tailwind.Breakpoints exposing (..)
 import Tailwind.Utilities exposing (..)
 
 
+appName : String
+appName =
+    "Moon Garden"
+
+
 loadingScreen : { message : String, isError : Bool } -> Html msg
 loadingScreen element =
     appShellCentered
-        [ moonGardenTitle
+        [ titleText [ text_center ] appName
         , p
             [ css
                 [ font_body
@@ -38,7 +43,7 @@ loadingScreen element =
 signinScreen : { onClickSignIn : msg } -> Html msg
 signinScreen element =
     appShellCentered
-        [ moonGardenTitle
+        [ titleText [ text_center ] appName
         , p
             [ css
                 [ text_bluegray_800
@@ -174,22 +179,52 @@ appShellSidebar element =
         ]
 
 
-moonGardenTitle : Html msg
-moonGardenTitle =
+appShellColumn : List (Html msg) -> Html msg
+appShellColumn content =
+    div
+        [ css
+            [ bg_beige_100
+            , items_center
+            , flex
+            , flex_col
+            , flex_grow
+            , flex_shrink_0
+            , py_6
+            , sm [ pt_12 ]
+            ]
+        ]
+        [ main_
+            [ css
+                [ max_w_md
+                , w_full
+                , mx_auto
+                , flex
+                , flex_col
+                , flex_grow
+                , space_y_8
+                ]
+            ]
+            content
+        ]
+
+
+titleText : List Css.Style -> String -> Html msg
+titleText styles content =
     h1
         [ css
-            [ text_bluegray_800
-            , text_center
-            , text_2xl
+            [ Css.batch styles
+            , text_bluegray_800
+            , text_3xl
             , font_title
             , sm [ text_5xl ]
             ]
         ]
-        [ text "Moon Garden" ]
+        [ text content ]
 
 
 searchInput :
     { onInput : String -> msg
+    , placeholder : String
     , styles : List Css.Style
     }
     -> Html msg
@@ -204,13 +239,14 @@ searchInput element =
         ]
         [ input
             [ type_ "text"
-            , placeholder "Type to Search"
+            , placeholder element.placeholder
             , Events.onInput element.onInput
             , css
                 [ px_4
                 , py_3
                 , rounded_md
                 , bg_beige_200
+                , text_bluegray_800
                 , focusable
                 , font_mono
                 , Css.pseudoElement "placeholder"
