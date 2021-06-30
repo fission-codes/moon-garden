@@ -4,27 +4,17 @@ let
   pkgs    = import sources.nixpkgs {};
 
   commands = import ./nix/commands.nix;
-  tasks = commands {pkgs = pkgs;};
+  tasks    = commands { pkgs = pkgs; };
+  yarn     = pkgs.yarn.override { nodejs = pkgs.nodejs-16_x; };
 
   deps = {
-    tools = [
-      pkgs.curl
-      pkgs.devd
-      pkgs.just
-      pkgs.watchexec
-    ];
-
     elm = [
       pkgs.elmPackages.elm
       pkgs.elmPackages.elm-format
-      pkgs.elmPackages.elm-live
     ];
 
     node = [
-      pkgs.nodejs-14_x
-      pkgs.nodePackages.pnpm
-
-      pkgs.yarn
+      yarn
     ];
   };
 
@@ -32,13 +22,9 @@ in
 
   pkgs.mkShell {
     nativeBuildInputs = builtins.concatLists [
-      deps.tools
       deps.elm
       deps.node
+
       tasks
     ];
-
-    shellHook = ''
-      ${pkgs.yarn}/bin/yarn install
-    '';
   }
