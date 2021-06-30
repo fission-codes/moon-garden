@@ -3,7 +3,7 @@ module View exposing (..)
 import Css
 import FeatherIcons
 import Html.Styled as Html exposing (..)
-import Html.Styled.Attributes exposing (css, href, id, placeholder, type_)
+import Html.Styled.Attributes exposing (css, href, id, placeholder, type_, value)
 import Html.Styled.Events as Events
 import Tailwind.Breakpoints exposing (..)
 import Tailwind.Utilities exposing (..)
@@ -38,29 +38,19 @@ test noOp =
                     ]
                 ]
         , main =
-            [ input
-                [ type_ "text"
-                , placeholder "Enter a Title"
-                , css
-                    [ w_full
-                    , bg_transparent
-                    , text_3xl
-                    , text_bluegray_800
-                    , font_title
-                    , Css.pseudoElement "placeholder"
-                        [ text_beige_400 ]
-                    , sm
-                        [ text_4xl
-                        ]
+            [ titleInput
+                { onInput = \_ -> noOp
+                , value = ""
+                , styles = []
+                }
+            , autoresizeTextarea
+                { onChange = \_ -> noOp
+                , content = ""
+                , styles =
+                    [ Css.property "min-height" "16rem"
+                    , mt_8
                     ]
-                ]
-                []
-            , textarea
-                [ css
-                    [ w_full
-                    ]
-                ]
-                []
+                }
             ]
         }
 
@@ -207,17 +197,18 @@ appShellSidebar element =
             [ id appShellSidebarMainSectionId
             , css
                 [ p_6
-                , Css.property "min-width" "100vw"
                 , flex_grow
                 , flex_shrink_0
                 , h_full
+                , w_screen
                 , Css.property "scroll-snap-align" "start"
                 , overflow_y_auto
                 , max_h_screen
                 , sm
-                    [ Css.property "min-width" "auto"
+                    [ w_auto
+                    , flex_shrink
                     ]
-                , lg
+                , xl
                     [ mr_auto
                     , max_w_screen_md
                     ]
@@ -364,3 +355,83 @@ buttonCreateNewNote element =
             ]
         ]
         [ text "Create New Note" ]
+
+
+titleInput :
+    { onInput : String -> msg
+    , value : String
+    , styles : List Css.Style
+    }
+    -> Html msg
+titleInput element =
+    input
+        [ type_ "text"
+        , placeholder "Enter a Title"
+        , value element.value
+        , Events.onInput element.onInput
+        , css
+            [ Css.batch element.styles
+            , w_full
+            , bg_transparent
+            , text_3xl
+            , text_bluegray_800
+            , font_title
+            , Css.pseudoElement "placeholder"
+                [ text_beige_400
+                ]
+            , sm
+                [ text_4xl
+                ]
+            ]
+        ]
+        []
+
+
+autoresizeTextarea :
+    { onChange : String -> msg
+    , content : String
+    , styles : List Css.Style
+    }
+    -> Html msg
+autoresizeTextarea element =
+    div
+        [ Events.onInput element.onChange
+        , css
+            [ Css.batch element.styles
+            , w_full
+            , relative
+            , font_mono
+            , text_base
+            , leading_normal
+            , flex
+            , flex_col
+            ]
+        ]
+        [ pre
+            [ css
+                [ flex_grow
+                , flex_shrink_0
+                , text_transparent
+                , pointer_events_none
+                ]
+            ]
+            [ text element.content
+            , text "\n"
+            ]
+        , textarea
+            [ placeholder "Start writing markdown and use [[wikilinks]]"
+            , css
+                [ bg_transparent
+                , text_gray_900
+                , absolute
+                , inset_0
+                , w_full
+                , h_full
+                , resize_none
+                , Css.pseudoElement "placeholder"
+                    [ text_beige_400
+                    ]
+                ]
+            ]
+            [ text element.content ]
+        ]
