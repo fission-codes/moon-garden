@@ -438,12 +438,16 @@ wikilinkExisting element =
     a
         [ href element.link
         , css
-            [ inline
-            , text_bluegray_800
+            [ text_bluegray_800
             , font_body
             , p_2
             , relative
             , z_0
+            , Css.visited
+                [ Css.pseudoElement "before"
+                    [ bg_rose_300
+                    ]
+                ]
             , Css.hover
                 [ Css.pseudoElement "before"
                     [ top_2 ]
@@ -462,3 +466,39 @@ wikilinkExisting element =
             ]
         ]
         [ text element.label ]
+
+
+wikilinkNew : { label : String, onClickCreate : msg } -> Html msg
+wikilinkNew element =
+    span
+        [ css
+            [ flex
+            , flex_row
+            , items_center
+            , text_bluegray_800
+            , font_body
+            , p_2
+            , rounded_md
+            , transform_gpu
+            , Css.property "transition-properties" "colors transform"
+            , duration_200
+            , cursor_pointer
+            , Css.hover
+                [ bg_beige_200 ]
+            , Css.active
+                [ scale_95 ]
+            ]
+        ]
+        [ span [] [ text element.label ]
+        , FeatherIcons.plus
+            |> FeatherIcons.withSize 20
+            |> FeatherIcons.toHtml []
+            |> fromUnstyled
+            |> List.singleton
+            |> span
+                [ css
+                    [ text_bluegray_800
+                    , ml_1
+                    ]
+                ]
+        ]
