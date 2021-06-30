@@ -14,12 +14,41 @@ test noOp =
     -- signinScreen { onClickSignIn = noOp }
     -- loadingScreen { message = "Spinning violently around the y-axis..." }
     appShellSidebar
+        { navigation =
+            List.concat
+                [ [ button
+                        [ css
+                            [ leafButtonStyle
+                            , py_3
+                            ]
+                        ]
+                        [ text "Create New Note" ]
+                  , searchInput [ mt_8 ]
+                  ]
+                , List.map
+                    (\result ->
+                        searchResult
+                            { label = result
+                            , link = "#" ++ appShellSidebarMainSectionId
+                            , styles = [ mt_4 ]
+                            }
+                    )
+                    [ "Moon Garden"
+                    , "Markdown"
+                    , "WNFS"
+                    , "Wikilinks"
+                    , "Geometric Algebra for Computer Science"
+                    ]
+                ]
+        , main =
+            [ moonGardenTitle ]
+        }
 
 
 loadingScreen : { message : String } -> Html msg
 loadingScreen element =
     appShellCentered
-        [ moonGarden
+        [ moonGardenTitle
         , p
             [ css
                 [ font_body
@@ -45,7 +74,7 @@ loadingScreen element =
 signinScreen : { onClickSignIn : msg } -> Html msg
 signinScreen element =
     appShellCentered
-        [ moonGarden
+        [ moonGardenTitle
         , p
             [ css
                 [ text_bluegray_800
@@ -96,8 +125,26 @@ appShellCentered content =
         ]
 
 
-appShellSidebar : Html msg
-appShellSidebar =
+{-| The default scroll position for the app shell with a
+sidebar is going to be to the far left - thus you'll see
+the navigation first.
+
+Thus, the main section has an 'id' set to this value.
+Use this to potentially set the scroll position or set
+the url to `something ++ #<appShellSidebarMainSectionId>`.
+
+-}
+appShellSidebarMainSectionId : String
+appShellSidebarMainSectionId =
+    "main"
+
+
+appShellSidebar :
+    { navigation : List (Html msg)
+    , main : List (Html msg)
+    }
+    -> Html msg
+appShellSidebar element =
     div
         [ css
             [ bg_beige_100
@@ -109,7 +156,7 @@ appShellSidebar =
             , Css.property "scroll-snap-type" "x mandatory"
             ]
         ]
-        [ div
+        [ nav
             [ css
                 [ w_64
                 , py_6
@@ -118,6 +165,7 @@ appShellSidebar =
                 , overflow_y_auto
                 , flex
                 , flex_col
+                , max_h_screen
                 ]
             ]
             [ div
@@ -130,35 +178,10 @@ appShellSidebar =
                     , flex_grow
                     ]
                 ]
-                (List.concat
-                    [ [ button
-                            [ css
-                                [ leafButtonStyle
-                                , py_3
-                                ]
-                            ]
-                            [ text "Create New Note" ]
-                      , searchInput [ mt_8 ]
-                      ]
-                    , List.map
-                        (\result ->
-                            searchResult
-                                { label = result
-                                , link = "#dashboard"
-                                , styles = [ mt_4 ]
-                                }
-                        )
-                        [ "Moon Garden"
-                        , "Markdown"
-                        , "WNFS"
-                        , "Wikilinks"
-                        , "Geometric Algebra for Computer Science"
-                        ]
-                    ]
-                )
+                element.navigation
             ]
-        , div
-            [ id "dashboard"
+        , section
+            [ id appShellSidebarMainSectionId
             , css
                 [ p_6
                 , Css.property "min-width" "100vw"
@@ -167,14 +190,15 @@ appShellSidebar =
                 , h_full
                 , Css.property "scroll-snap-align" "start"
                 , overflow_y_auto
+                , max_h_screen
                 ]
             ]
-            [ moonGarden ]
+            element.main
         ]
 
 
-moonGarden : Html msg
-moonGarden =
+moonGardenTitle : Html msg
+moonGardenTitle =
     h1
         [ css
             [ text_bluegray_800
