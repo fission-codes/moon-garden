@@ -1,15 +1,13 @@
 module Main exposing (main)
 
 import Browser
+import Html.Styled as Html exposing (Html)
+import Html.Styled.Attributes as Attr exposing (css)
+import Html.Styled.Events as Event exposing (..)
 import Ports
 import Random as Random
-
-import Html.Attributes as Attr exposing (..)
-import Html.Events as Event exposing (..)
-import Html.Styled as Html exposing (Html)
-import Html.Styled.Attributes exposing (css)
-
 import Tailwind.Utilities exposing (..)
+
 
 
 -- 🔠 ---------------------------------------------------------------------------
@@ -42,6 +40,7 @@ type alias Flags =
     ()
 
 
+
 -- 〽️  --------------------------------------------------------------------------
 
 
@@ -55,6 +54,7 @@ main =
         , onUrlChange = \_ -> NoOp
         , onUrlRequest = \_ -> NoOp
         }
+
 
 
 -- 🔁 --------------------------------------------------------------------------
@@ -85,6 +85,7 @@ initAuthState : Bool -> Model
 initAuthState isAuthenticated =
     if isAuthenticated then
         Authenticated
+
     else
         Unauthed PleaseSignIn
 
@@ -110,6 +111,7 @@ randomLoadingMessage =
             ]
 
 
+
 -- 🖼️  ---------------------------------------------------------------------------
 
 
@@ -123,45 +125,50 @@ view model =
 body : Model -> Html Msg
 body model =
     case model of
-        Unauthed unauthedState -> unauthenticated unauthedState
-        Authenticated -> authenticated
+        Unauthed unauthedState ->
+            unauthenticated unauthedState
+
+        Authenticated ->
+            authenticated
 
 
 authenticated : Html Msg
 authenticated =
     mainContainer
         [ Html.h1 [] [ Html.text "yay logged in" ]
-        , Html.textarea [Event.onInput (\_ -> NoOp)] []
-        , Html.button [Event.onClick NoOp] [Html.text "Save"]
+        , Html.textarea [ Event.onInput (\_ -> NoOp) ] []
+        , Html.button [ Event.onClick NoOp ] [ Html.text "Save" ]
         ]
+
 
 unauthenticated : Unauthenticated -> Html msg
 unauthenticated model =
-  case model of
-      Init ->
-          unauthedPage
-              [ Html.p []
-                  [ Html.text "Initializing..." ]
-              ]
+    case model of
+        Init ->
+            unauthedPage
+                [ Html.p []
+                    [ Html.text "Initializing..." ]
+                ]
 
-      Loading (LoadingMessage message) ->
-          unauthedPage
-              [ Html.p []
-                  [ Html.text message ]
-              ]
+        Loading (LoadingMessage message) ->
+            unauthedPage
+                [ Html.p []
+                    [ Html.text message ]
+                ]
 
-      Cancelled ->
-          unauthedPage
-            [ Html.text "Cancelled sign in"
-            , Html.button [ css [ bg_gray_50 ] ]
-                [ Html.text "Sign in with Fission" ]
-            ]
+        Cancelled ->
+            unauthedPage
+                [ Html.text "Cancelled sign in"
+                , Html.button [ css [ bg_gray_50 ] ]
+                    [ Html.text "Sign in with Fission" ]
+                ]
 
-      PleaseSignIn ->
-          unauthedPage
-            [ Html.button [ css [ bg_gray_50 ] ]
-                [ Html.text "Sign in with Fission" ]
-            ]
+        PleaseSignIn ->
+            unauthedPage
+                [ Html.button [ css [ bg_gray_50 ] ]
+                    [ Html.text "Sign in with Fission" ]
+                ]
+
 
 unauthedPage : List (Html msg) -> Html msg
 unauthedPage inner =
@@ -182,9 +189,10 @@ unauthedPage inner =
                     ]
                 ]
                 [ Html.text "A digital garden / second brain, built on Fission. Please take a seat and plant a seed." ]
-           ]
+            ]
     in
-        mainContainer (common ++ inner)
+    mainContainer (common ++ inner)
+
 
 mainContainer : List (Html msg) -> Html msg
 mainContainer =
