@@ -471,7 +471,8 @@ wikilinkExisting element =
 wikilinkNew : { label : String, onClickCreate : msg } -> Html msg
 wikilinkNew element =
     span
-        [ css
+        [ Events.onClick element.onClickCreate
+        , css
             [ flex
             , flex_row
             , items_center
