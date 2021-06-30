@@ -63,7 +63,8 @@ view model =
             --     { message = "Spinning violently around the y-axis..."
             --     , isError = True
             --     }
-            viewEditor model
+            -- viewEditor model
+            viewDashboard model
         ]
     }
 
@@ -76,6 +77,7 @@ viewEditor model =
                 [ [ View.buttonCreateNewNote { onClick = NoOp }
                   , View.searchInput
                         { styles = [ mt_8 ]
+                        , placeholder = "Type to Search"
                         , onInput = \_ -> NoOp
                         }
                   ]
@@ -115,3 +117,15 @@ viewEditor model =
                 }
             ]
         }
+
+
+viewDashboard : Model -> Html.Styled.Html Msg
+viewDashboard model =
+    View.appShellColumn
+        [ View.titleText [] "Hello, matheus23"
+        , View.searchInput
+            { onInput = \_ -> NoOp
+            , placeholder = "Search for Notes"
+            , styles = [ mt_8 ]
+            }
+        ]
