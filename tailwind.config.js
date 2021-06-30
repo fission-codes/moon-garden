@@ -5,6 +5,7 @@ export default {
     fontFamily: {
       title: ['Lora', 'serif'],
       body: ['Karla', 'sans-serif'],
+      button: ['Nunito VF Beta', 'sans-serif'],
       mono: ['Courier Prime', 'monospace'],
     },
     extend: {

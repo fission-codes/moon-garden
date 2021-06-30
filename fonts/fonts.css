@@ -1,7 +1,10 @@
+/********************
+ * Courier Prime
+ ********************/
+
 @font-face {
     font-family: 'Courier Prime';
-    src: url('../fonts/CourierPrime-BoldItalic.woff2') format('woff2'),
-        url('../fonts/CourierPrime-BoldItalic.woff') format('woff');
+    src: url('/fonts/CourierPrime-BoldItalic.woff2') format('woff2');
     font-weight: bold;
     font-style: italic;
     font-display: swap;
@@ -9,8 +12,7 @@
 
 @font-face {
     font-family: 'Courier Prime';
-    src: url('../fonts/CourierPrime-Italic.woff2') format('woff2'),
-        url('../fonts/CourierPrime-Italic.woff') format('woff');
+    src: url('/fonts/CourierPrime-Italic.woff2') format('woff2');
     font-weight: normal;
     font-style: italic;
     font-display: swap;
@@ -18,8 +20,7 @@
 
 @font-face {
     font-family: 'Courier Prime';
-    src: url('../fonts/CourierPrime-Regular.woff2') format('woff2'),
-        url('../fonts/CourierPrime-Regular.woff') format('woff');
+    src: url('/fonts/CourierPrime-Regular.woff2') format('woff2');
     font-weight: normal;
     font-style: normal;
     font-display: swap;
@@ -27,17 +28,19 @@
 
 @font-face {
     font-family: 'Courier Prime';
-    src: url('../fonts/CourierPrime-Bold.woff2') format('woff2'),
-        url('../fonts/CourierPrime-Bold.woff') format('woff');
+    src: url('/fonts/CourierPrime-Bold.woff2') format('woff2');
     font-weight: bold;
     font-style: normal;
     font-display: swap;
 }
 
+/********************
+ * Lora
+ ********************/
+
 @font-face {
     font-family: 'Lora';
-    src: url('../fonts/Lora-Italic.woff2') format('woff2'),
-        url('../fonts/Lora-Italic.woff') format('woff');
+    src: url('/fonts/Lora-Italic-VariableFont_wght.woff2') format('woff2');
     font-weight: 1 999;
     font-style: italic;
     font-display: swap;
@@ -45,17 +48,19 @@
 
 @font-face {
     font-family: 'Lora';
-    src: url('../fonts/Lora-Regular.woff2') format('woff2'),
-        url('../fonts/Lora-Regular.woff') format('woff');
+    src: url('/fonts/Lora-VariableFont_wght.woff2') format('woff2');
     font-weight: 1 999;
     font-style: normal;
     font-display: swap;
 }
 
+/********************
+ * Karla
+ ********************/
+
 @font-face {
     font-family: 'Karla';
-    src: url('../fonts/Karla-Italic.woff2') format('woff2'),
-        url('../fonts/Karla-Italic.woff') format('woff');
+    src: url('/fonts/Karla-Italic-VariableFont_wght.woff2') format('woff2');
     font-weight: 1 999;
     font-style: italic;
     font-display: swap;
@@ -63,10 +68,20 @@
 
 @font-face {
     font-family: 'Karla';
-    src: url('../fonts/Karla-Regular.woff2') format('woff2'),
-        url('../fonts/Karla-Regular.woff') format('woff');
+    src: url('/fonts/Karla-VariableFont_wght.woff2') format('woff2');
     font-weight: 1 999;
     font-style: normal;
     font-display: swap;
 }
 
+/********************
+ * Nunito
+ ********************/
+/* @import url(http://fonts.googleapis.com/earlyaccess/nunitovfbeta.css); */
+@font-face {
+    font-family: 'Nunito VF Beta';
+    src: url('/fonts/NunitoVFBeta.woff2') format('woff2');
+    font-weight: 54 156;
+    font-style: normal;
+    font-display: swap;
+}
