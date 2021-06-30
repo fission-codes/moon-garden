@@ -77,8 +77,8 @@
 /********************
  * Nunito
  ********************/
-/* @import url(http://fonts.googleapis.com/earlyaccess/nunitovfbeta.css); */
-@font-face {
+
+ @font-face {
     font-family: 'Nunito VF Beta';
     src: url('/fonts/NunitoVFBeta.woff2') format('woff2');
     font-weight: 54 156;
