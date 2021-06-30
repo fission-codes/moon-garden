@@ -9,52 +9,6 @@ import Tailwind.Breakpoints exposing (..)
 import Tailwind.Utilities exposing (..)
 
 
-test : msg -> Html msg
-test noOp =
-    -- signinScreen { onClickSignIn = noOp }
-    -- loadingScreen { message = "Spinning violently around the y-axis...", isError = True }
-    appShellSidebar
-        { navigation =
-            List.concat
-                [ [ buttonCreateNewNote { onClick = noOp }
-                  , searchInput
-                        { styles = [ mt_8 ]
-                        , onInput = \_ -> noOp
-                        }
-                  ]
-                , List.map
-                    (\result ->
-                        searchResult
-                            { label = result
-                            , link = "#" ++ appShellSidebarMainSectionId
-                            , styles = [ mt_4 ]
-                            }
-                    )
-                    [ "Moon Garden"
-                    , "Markdown"
-                    , "WNFS"
-                    , "Wikilinks"
-                    , "Geometric Algebra for Computer Science"
-                    ]
-                ]
-        , main =
-            [ titleInput
-                { onInput = \_ -> noOp
-                , value = ""
-                , styles = []
-                }
-            , autoresizeTextarea
-                { onChange = \_ -> noOp
-                , content = ""
-                , styles =
-                    [ Css.property "min-height" "16rem"
-                    , mt_8
-                    ]
-                }
-            ]
-        }
-
-
 loadingScreen : { message : String, isError : Bool } -> Html msg
 loadingScreen element =
     appShellCentered
@@ -197,6 +151,8 @@ appShellSidebar element =
             [ id appShellSidebarMainSectionId
             , css
                 [ p_6
+                , flex
+                , flex_col
                 , flex_grow
                 , flex_shrink_0
                 , h_full
@@ -387,6 +343,14 @@ titleInput element =
         []
 
 
+editorTextareaStyle : Css.Style
+editorTextareaStyle =
+    Css.batch
+        [ Css.property "min-height" "16rem"
+        , mt_8
+        ]
+
+
 autoresizeTextarea :
     { onChange : String -> msg
     , content : String
@@ -436,4 +400,20 @@ autoresizeTextarea element =
                 ]
             ]
             [ text element.content ]
+        ]
+
+
+wikilinksSection : { styles : List Css.Style } -> Html msg
+wikilinksSection element =
+    section
+        []
+        [ h3
+            [ css
+                [ Css.batch element.styles
+                , text_2xl
+                , text_bluegray_800
+                , font_title
+                ]
+            ]
+            [ text "Wikilinks" ]
         ]
