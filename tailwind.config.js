@@ -12,6 +12,7 @@ export default {
       colors: {
         bluegray: {
           '800': '#45465A',
+          '700': '#666784',
         },
         beige: {
           '100': '#F4ECE1',
