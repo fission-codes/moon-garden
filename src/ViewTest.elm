@@ -106,6 +106,11 @@ viewEditor model =
                 , styles = [ View.editorTextareaStyle ]
                 }
             , View.wikilinksSection
-                { styles = [ mt_8 ] }
+                { styles = [ mt_8 ]
+                , wikilinks =
+                    [ View.wikilinkExisting { label = "WNFS", link = "#" }
+                    , View.wikilinkExisting { label = "Fission", link = "#" }
+                    ]
+                }
             ]
         }
