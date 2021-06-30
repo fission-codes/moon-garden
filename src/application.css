@@ -12,3 +12,12 @@ body {
     @apply min-h-full;
     @apply flex flex-col;
 }
+
+
+:focus {
+    @apply outline-none !important; /* need to override another setting from the tailwind base style reset */
+}
+
+:focus-visible {
+    @apply ring-3 ring-opacity-80 ring-leaf-600;
+}
