@@ -56,26 +56,41 @@ signinScreen =
                 ]
             , button
                 [ css
-                    [ font_button
-                    , Css.property "font-weight" "100"
-                    , bg_leaf_600
-                    , text_white
-                    , px_12
+                    [ px_12
                     , py_3
-                    , rounded_md
-                    , rounded_tl_3xl
-                    , rounded_br_3xl
-                    , transform_gpu
-                    , translate_y_0
-                    , Css.property "transition-property" "transform box-shadow"
-                    , duration_100
-                    , Css.property "box-shadow" "0 0.25rem 0 0 #95A25C"
-                    , Css.active
-                        [ translate_y_1
-                        , Css.property "box-shadow" "0 0 0 0 #95A25C"
-                        ]
+                    , leafButtonStyle
                     ]
                 ]
                 [ text "Sign in With Fission" ]
+            ]
+        ]
+
+
+leafButtonStyle : Css.Style
+leafButtonStyle =
+    Css.batch
+        [ -- font
+          font_button
+        , Css.property "font-weight" "100"
+
+        -- colors
+        , bg_leaf_600
+        , text_white
+        , Css.property "box-shadow" "0 0.25rem 0 0 #95A25C"
+        , focusable
+
+        -- corners
+        , rounded_md
+        , rounded_tl_3xl
+        , rounded_br_3xl
+
+        -- button press animation
+        , transform_gpu
+        , translate_y_0
+        , Css.property "transition-property" "transform box-shadow"
+        , duration_100
+        , Css.active
+            [ translate_y_1
+            , Css.property "box-shadow" "0 0 0 0 #95A25C"
             ]
         ]

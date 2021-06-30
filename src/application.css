@@ -18,6 +18,6 @@ body {
     @apply outline-none !important; /* need to override another setting from the tailwind base style reset */
 }
 
-:focus-visible {
-    @apply ring-3 ring-opacity-80 ring-leaf-600;
+.focusable:focus-visible {
+    @apply ring-2 ring-offset-2 ring-opacity-80 ring-leaf-600;
 }
