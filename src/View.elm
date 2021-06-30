@@ -1,6 +1,7 @@
 module View exposing (..)
 
 import Css
+import Css.Media
 import FeatherIcons
 import Html.Styled as Html exposing (..)
 import Html.Styled.Attributes exposing (css, href, id, placeholder, type_, value)
@@ -195,13 +196,14 @@ appShellColumn content =
         ]
         [ main_
             [ css
-                [ max_w_md
+                [ max_w_xl
                 , w_full
                 , mx_auto
                 , flex
                 , flex_col
                 , flex_grow
                 , space_y_8
+                , px_6
                 ]
             ]
             content
@@ -220,6 +222,32 @@ titleText styles content =
             ]
         ]
         [ text content ]
+
+
+subtitleText : List Css.Style -> String -> Html msg
+subtitleText styles content =
+    h2
+        [ css
+            [ Css.batch styles
+            , text_bluegray_800
+            , text_2xl
+            , font_title
+            , sm [ text_3xl ]
+            ]
+        ]
+        [ text content ]
+
+
+paragraph : List Css.Style -> List (Html msg) -> Html msg
+paragraph styles content =
+    p
+        [ css
+            [ Css.batch styles
+            , font_body
+            , text_bluegray_800
+            ]
+        ]
+        content
 
 
 searchInput :
@@ -280,13 +308,29 @@ searchInput element =
         ]
 
 
-searchResult :
+searchGrid : List (Html msg) -> Html msg
+searchGrid content =
+    ul
+        [ css
+            [ grid
+            , gap_3
+            , grid_cols_1
+            , Css.Media.withMediaQuery [ "(min-width: 580px)" ]
+                [ grid_cols_3 ]
+            , Css.Media.withMediaQuery [ "(min-width: 360px)" ]
+                [ grid_cols_2 ]
+            ]
+        ]
+        content
+
+
+referencedNoteCard :
     { label : String
     , link : String
     , styles : List Css.Style
     }
     -> Html msg
-searchResult element =
+referencedNoteCard element =
     a
         [ href element.link
         , css
