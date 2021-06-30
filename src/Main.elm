@@ -15,7 +15,7 @@ import Tailwind.Utilities exposing (..)
 
 type Model
     = Unauthed Unauthenticated
-    | Authenticated -- FIXME add more actions to Authenticated
+    | Authed Authenticated -- FIXME add more actions to Authenticated
 
 
 type Unauthenticated
@@ -24,12 +24,17 @@ type Unauthenticated
     | Cancelled
     | PleaseSignIn
 
+type Authenticated
+    = Note { editorBuffer : String }
+
 
 type Msg
     = NoOp -- FIXME Replace with navigation messages
     | GeneratedLoadingMessage LoadingMessage
     | WebnativeSignIn
     | WebnativeInit Bool
+    | UpdateEditorBuffer String
+    | PersistNote
 
 
 type LoadingMessage
@@ -75,6 +80,11 @@ update msg model =
         WebnativeSignIn ->
             ( model, Ports.redirectToLobby () )
 
+        UpdateEditorBuffer updatedText ->
+            ( Authed <| Note { editorBuffer = updatedText}, Cmd.none )
+
+        PersistNote ->
+            ( model, Ports.persistNote () )
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
@@ -84,7 +94,7 @@ subscriptions _ =
 initAuthState : Bool -> Model
 initAuthState isAuthenticated =
     if isAuthenticated then
-        Authenticated
+        Authed <| Note { editorBuffer = "" }
 
     else
         Unauthed PleaseSignIn
@@ -92,23 +102,23 @@ initAuthState isAuthenticated =
 
 randomLoadingMessage : Cmd LoadingMessage
 randomLoadingMessage =
-    Random.generate LoadingMessage <|
-        -- Source: https://gist.github.com/meain/6440b706a97d2dd71574769517e7ed32
-        Random.uniform "Loading..."
-            [ "Reticulating splines..."
-            , "Generating witty dialog..."
-            , "Swapping time and space..."
-            , "Spinning violently around the y-axis..."
-            , "Tokenizing real life..."
-            , "Bending the spoon..."
-            , "Filtering morale..."
-            , "Don't think of purple hippos..."
-            , "Checking the gravitational constant in your locale..."
-            , "You're not in Kansas any more..."
-            , "...at least you're not on hold..."
-            , "Follow the white rabbit..."
-            , "Counting backwards from Infinity..."
-            ]
+    -- Source: https://gist.github.com/meain/6440b706a97d2dd71574769517e7ed32
+    [ "Reticulating splines..."
+    , "Generating witty dialog..."
+    , "Swapping time and space..."
+    , "Spinning violently around the y-axis..."
+    , "Tokenizing real life..."
+    , "Bending the spoon..."
+    , "Filtering morale..."
+    , "Don't think of purple hippos..."
+    , "Checking the gravitational constant in your locale..."
+    , "You're not in Kansas any more..."
+    , "...at least you're not on hold..."
+    , "Follow the white rabbit..."
+    , "Counting backwards from Infinity..."
+    ]
+    |> Random.uniform "Loading..."
+    |> Random.generate LoadingMessage
 
 
 
@@ -128,17 +138,29 @@ body model =
         Unauthed unauthedState ->
             unauthenticated unauthedState
 
-        Authenticated ->
-            authenticated
+        Authed authState ->
+            authenticated authState
 
 
-authenticated : Html Msg
-authenticated =
-    mainContainer
-        [ Html.h1 [] [ Html.text "yay logged in" ]
-        , Html.textarea [ Event.onInput (\_ -> NoOp) ] []
-        , Html.button [ Event.onClick NoOp ] [ Html.text "Save" ]
-        ]
+authenticated : Authenticated -> Html Msg
+authenticated model =
+    case model of
+        Note {editorBuffer} ->
+            mainContainer
+                [ Html.h1 []
+                    [ Html.text "yay logged in" ]
+
+                , Html.textarea
+                    [ Event.onInput UpdateEditorBuffer
+                    , Attr.placeholder "Type your note here. Markdown supported!"
+                    ]
+                    [ Html.text editorBuffer ]
+
+                , Html.button [ Event.onClick PersistNote ]
+                    [ Html.text "Save" ]
+
+                , Html.text editorBuffer
+                ]
 
 
 unauthenticated : Unauthenticated -> Html msg
