@@ -3,16 +3,17 @@ module View exposing (..)
 import Css
 import Html.Styled as Html exposing (..)
 import Html.Styled.Attributes exposing (css)
+import Html.Styled.Events as Events
 import Tailwind.Utilities exposing (..)
 
 
-test : Html msg
-test =
-    signinScreen
+test : msg -> Html msg
+test noOp =
+    signinScreen { onClickSignIn = noOp }
 
 
-signinScreen : Html msg
-signinScreen =
+signinScreen : { onClickSignIn : msg } -> Html msg
+signinScreen element =
     div
         [ css
             [ bg_beige_100
@@ -23,7 +24,7 @@ signinScreen =
             , flex_shrink_0
             ]
         ]
-        [ section
+        [ main_
             [ css
                 [ max_w_md
                 , m_auto
@@ -55,7 +56,8 @@ signinScreen =
                 , text "Start your own digital garden by logging in to your fission account or creating a new one:"
                 ]
             , button
-                [ css
+                [ Events.onClick element.onClickSignIn
+                , css
                     [ px_12
                     , py_3
                     , leafButtonStyle
