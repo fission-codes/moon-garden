@@ -7,8 +7,6 @@ let
   tasks    = commands { pkgs = pkgs; };
   yarn     = pkgs.yarn.override { nodejs = pkgs.nodejs-16_x; };
 
-  yarn = pkgs.yarn.override { nodejs = pkgs.nodejs-16_x; };
-
   deps = {
     elm = [
       pkgs.elmPackages.elm
