@@ -110,6 +110,7 @@ viewEditor model =
                 , wikilinks =
                     [ View.wikilinkExisting { label = "WNFS", link = "#" }
                     , View.wikilinkExisting { label = "Fission", link = "#" }
+                    , View.wikilinkNew { label = "Markdown", onClickCreate = NoOp }
                     ]
                 }
             ]
