@@ -166,6 +166,9 @@ appShellSidebar element =
                 , flex
                 , flex_col
                 , max_h_screen
+                , xl
+                    [ Css.property "margin-left" "calc(50vw - 16rem - 384px)"
+                    ]
                 ]
             ]
             [ div
@@ -191,6 +194,13 @@ appShellSidebar element =
                 , Css.property "scroll-snap-align" "start"
                 , overflow_y_auto
                 , max_h_screen
+                , sm
+                    [ Css.property "min-width" "auto"
+                    ]
+                , lg
+                    [ mr_auto
+                    , max_w_screen_md
+                    ]
                 ]
             ]
             element.main
