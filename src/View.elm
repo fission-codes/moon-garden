@@ -405,6 +405,7 @@ autoresizeTextarea element =
             , leading_normal
             , flex
             , flex_col
+            , flex_shrink_0
             ]
         ]
         [ pre
@@ -413,6 +414,7 @@ autoresizeTextarea element =
                 , flex_shrink_0
                 , text_transparent
                 , pointer_events_none
+                , whitespace_pre_wrap
                 ]
             ]
             [ text element.content
