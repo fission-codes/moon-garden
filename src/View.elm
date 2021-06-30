@@ -38,7 +38,30 @@ test noOp =
                     ]
                 ]
         , main =
-            [ moonGardenTitle ]
+            [ input
+                [ type_ "text"
+                , placeholder "Enter a Title"
+                , css
+                    [ w_full
+                    , bg_transparent
+                    , text_3xl
+                    , text_bluegray_800
+                    , font_title
+                    , Css.pseudoElement "placeholder"
+                        [ text_beige_400 ]
+                    , sm
+                        [ text_4xl
+                        ]
+                    ]
+                ]
+                []
+            , textarea
+                [ css
+                    [ w_full
+                    ]
+                ]
+                []
+            ]
         }
 
 
