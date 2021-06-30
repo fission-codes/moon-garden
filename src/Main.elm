@@ -5,6 +5,7 @@ import Ports
 import Random as Random
 
 import Html.Attributes as Attr exposing (..)
+import Html.Events as Event exposing (..)
 import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes exposing (css)
 
@@ -16,14 +17,14 @@ import Tailwind.Utilities exposing (..)
 
 type Model
     = Unauthed Unauthenticated
-    | Authenticated
+    | Authenticated -- FIXME add more actions to Authenticated
 
 
 type Unauthenticated
     = Init
     | Loading LoadingMessage
     | Cancelled
-    | SignIn
+    | PleaseSignIn
 
 
 type Msg
@@ -36,6 +37,7 @@ type Msg
 type LoadingMessage
     = LoadingMessage String
 
+
 type alias Flags =
     ()
 
@@ -46,7 +48,7 @@ type alias Flags =
 main : Program Flags Model Msg
 main =
     Browser.application
-        { init = \_ _ _ -> ( Unauthed Init, Cmd.map (GeneratedLoadingMessage) randomLoadingMessage )
+        { init = \_ _ _ -> ( Unauthed Init, Cmd.map GeneratedLoadingMessage randomLoadingMessage )
         , update = update
         , subscriptions = subscriptions
         , view = view
@@ -84,7 +86,7 @@ initAuthState isAuthenticated =
     if isAuthenticated then
         Authenticated
     else
-        Unauthed SignIn
+        Unauthed PleaseSignIn
 
 
 randomLoadingMessage : Cmd LoadingMessage
@@ -129,10 +131,11 @@ authenticated : Html Msg
 authenticated =
     mainContainer
         [ Html.h1 [] [ Html.text "yay logged in" ]
-        , Html.textarea [] []
+        , Html.textarea [Event.onInput (\_ -> NoOp)] []
+        , Html.button [Event.onClick NoOp] [Html.text "Save"]
         ]
 
-unauthenticated : Unauthenticated -> Html Msg
+unauthenticated : Unauthenticated -> Html msg
 unauthenticated model =
   case model of
       Init ->
@@ -154,13 +157,13 @@ unauthenticated model =
                 [ Html.text "Sign in with Fission" ]
             ]
 
-      SignIn ->
+      PleaseSignIn ->
           unauthedPage
             [ Html.button [ css [ bg_gray_50 ] ]
                 [ Html.text "Sign in with Fission" ]
             ]
 
-unauthedPage : List (Html Msg) -> Html Msg
+unauthedPage : List (Html msg) -> Html msg
 unauthedPage inner =
     let
         common =
@@ -183,7 +186,7 @@ unauthedPage inner =
     in
         mainContainer (common ++ inner)
 
-mainContainer : List (Html Msg) -> Html Msg
+mainContainer : List (Html msg) -> Html msg
 mainContainer =
     Html.main_
         [ css
