@@ -7,6 +7,7 @@ import Html.Styled.Events as Event exposing (..)
 import Ports
 import Random as Random
 import Tailwind.Utilities exposing (..)
+import View as View
 
 
 
@@ -15,7 +16,7 @@ import Tailwind.Utilities exposing (..)
 
 type Model
     = Unauthed Unauthenticated
-    | Authenticated -- FIXME add more actions to Authenticated
+    | Authed Authenticated -- FIXME add more actions to Authenticated
 
 
 type Unauthenticated
@@ -24,12 +25,20 @@ type Unauthenticated
     | Cancelled
     | PleaseSignIn
 
+type Authenticated
+    = Note { editorBuffer : String
+           , dirty : Bool
+           , saving : Bool
+           }
+
 
 type Msg
     = NoOp -- FIXME Replace with navigation messages
     | GeneratedLoadingMessage LoadingMessage
     | WebnativeSignIn
     | WebnativeInit Bool
+    | UpdateEditorBuffer String
+    | PersistNote {noteName : String, noteData : String}
 
 
 type LoadingMessage
@@ -75,6 +84,15 @@ update msg model =
         WebnativeSignIn ->
             ( model, Ports.redirectToLobby () )
 
+        UpdateEditorBuffer updatedText ->
+            ( Authed <| Note { editorBuffer = updatedText
+                             , dirty = True
+                             , saving = False
+                             }
+            , Cmd.none )
+
+        PersistNote {noteName, noteData} ->
+            ( model, Ports.persistNote {noteName = noteName, noteData = noteData} )
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
@@ -84,7 +102,10 @@ subscriptions _ =
 initAuthState : Bool -> Model
 initAuthState isAuthenticated =
     if isAuthenticated then
-        Authenticated
+        Authed <| Note { editorBuffer = ""
+                       , dirty = False
+                       , saving = False
+                       }
 
     else
         Unauthed PleaseSignIn
@@ -92,23 +113,23 @@ initAuthState isAuthenticated =
 
 randomLoadingMessage : Cmd LoadingMessage
 randomLoadingMessage =
-    Random.generate LoadingMessage <|
-        -- Source: https://gist.github.com/meain/6440b706a97d2dd71574769517e7ed32
-        Random.uniform "Loading..."
-            [ "Reticulating splines..."
-            , "Generating witty dialog..."
-            , "Swapping time and space..."
-            , "Spinning violently around the y-axis..."
-            , "Tokenizing real life..."
-            , "Bending the spoon..."
-            , "Filtering morale..."
-            , "Don't think of purple hippos..."
-            , "Checking the gravitational constant in your locale..."
-            , "You're not in Kansas any more..."
-            , "...at least you're not on hold..."
-            , "Follow the white rabbit..."
-            , "Counting backwards from Infinity..."
-            ]
+    -- Source: https://gist.github.com/meain/6440b706a97d2dd71574769517e7ed32
+    [ "Reticulating splines..."
+    , "Generating witty dialog..."
+    , "Swapping time and space..."
+    , "Spinning violently around the y-axis..."
+    , "Tokenizing real life..."
+    , "Bending the spoon..."
+    , "Filtering morale..."
+    , "Don't think of purple hippos..."
+    , "Checking the gravitational constant in your locale..."
+    , "You're not in Kansas any more..."
+    , "...at least you're not on hold..."
+    , "Follow the white rabbit..."
+    , "Counting backwards from Infinity..."
+    ]
+    |> Random.uniform "Loading..."
+    |> Random.generate LoadingMessage
 
 
 
@@ -128,73 +149,46 @@ body model =
         Unauthed unauthedState ->
             unauthenticated unauthedState
 
-        Authenticated ->
-            authenticated
+        Authed authState ->
+            authenticated authState
 
 
-authenticated : Html Msg
-authenticated =
-    mainContainer
-        [ Html.h1 [] [ Html.text "yay logged in" ]
-        , Html.textarea [ Event.onInput (\_ -> NoOp) ] []
-        , Html.button [ Event.onClick NoOp ] [ Html.text "Save" ]
-        ]
+authenticated : Authenticated -> Html Msg
+authenticated model =
+    case model of
+        Note {editorBuffer} ->
+            mainContainer
+                [ Html.h1 []
+                    [ Html.text "yay logged in" ]
+
+                , Html.textarea
+                    [ Event.onInput UpdateEditorBuffer
+                    , Attr.placeholder "Type your note here. Markdown supported!"
+                    ]
+                    [ Html.text editorBuffer ]
+
+                , Html.button [ Event.onClick <| PersistNote {noteName = "testing2", noteData = editorBuffer} ]
+                    [ Html.text "Save" ]
+                ]
 
 
-unauthenticated : Unauthenticated -> Html msg
+unauthenticated : Unauthenticated -> Html Msg
 unauthenticated model =
     case model of
         Init ->
-            unauthedPage
-                [ Html.p []
-                    [ Html.text "Initializing..." ]
-                ]
+            View.loadingScreen {message = "Initializing...", isError = False}
 
         Loading (LoadingMessage message) ->
-            unauthedPage
-                [ Html.p []
-                    [ Html.text message ]
-                ]
+            View.loadingScreen {message = message, isError = False}
 
         Cancelled ->
-            unauthedPage
-                [ Html.text "Cancelled sign in"
-                , Html.button [ css [ bg_gray_50 ] ]
-                    [ Html.text "Sign in with Fission" ]
-                ]
+            View.loadingScreen {message = "Auth cancelled", isError = True}
 
         PleaseSignIn ->
-            unauthedPage
-                [ Html.button [ css [ bg_gray_50 ] ]
-                    [ Html.text "Sign in with Fission" ]
-                ]
+            View.signinScreen {onClickSignIn = WebnativeSignIn}
 
 
-unauthedPage : List (Html msg) -> Html msg
-unauthedPage inner =
-    let
-        common =
-            [ Html.h1
-                [ css
-                    [ font_title
-                    , text_4xl
-                    , font_thin
-                    ]
-                ]
-                [ Html.text "Welcome to 🌛 Moon Garden! 🌱" ]
-            , Html.p
-                [ css
-                    [ font_body
-                    , mt_6
-                    ]
-                ]
-                [ Html.text "A digital garden / second brain, built on Fission. Please take a seat and plant a seed." ]
-            ]
-    in
-    mainContainer (common ++ inner)
-
-
-mainContainer : List (Html msg) -> Html msg
+mainContainer : List (Html Msg) -> Html Msg
 mainContainer =
     Html.main_
         [ css
