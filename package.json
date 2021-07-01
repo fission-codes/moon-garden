@@ -10,7 +10,7 @@
   "scripts": {
     "start": "yarn gen:css && vite",
     "build": "yarn gen:css && vite build --outDir build",
-    "gen:css": "node tailwind-modules.js"
+    "gen:css": "mkdir gen && node tailwind-modules.js"
   },
   "devDependencies": {
     "autoprefixer": "^10.2.6",
