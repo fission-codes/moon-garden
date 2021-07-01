@@ -5,9 +5,9 @@ import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes as Attr exposing (css)
 import Html.Styled.Events as Event exposing (..)
 import Ports
-import Random as Random
+import Random
 import Tailwind.Utilities exposing (..)
-import View as View
+import View
 
 
 
