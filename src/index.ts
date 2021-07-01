@@ -7,6 +7,8 @@ const elmApp = Elm.Main.init({
 
 let state: wn.State | null = null;
 
+wn.setup.debug({ enabled: true })
+
 wn.initialise({
     permissions: {
         app: {
@@ -17,10 +19,9 @@ wn.initialise({
             public: [ wn.path.directory("Documents", "Notes") ]
         }
     }
-}).then((initState: wn.AuthSucceeded) => {
+}).then(initState => {
     console.debug("Initial state", initState)
     state = initState
-    const {fs} = state
 
     elmApp.ports.redirectToLobby.subscribe(() => {
         wn.redirectToLobby(state.permissions)
@@ -31,13 +32,17 @@ wn.initialise({
     elmApp.ports.persistNote.subscribe(({noteName, noteData}) => {
         const path = wn.path.file("public", "Documents", "Notes", `${noteName}.md`)
 
-        fs.write(path, noteData).then(() => {
-            console.debug("Content: ", noteData)
-            console.debug("Wrote note to ", path)
-            fs.publish().then(() => {
-                console.debug("Published")
+        if (state.authenticated) {
+            const fs = state.fs
+
+            fs.write(path, noteData).then(() => {
+                console.debug("Content: ", noteData)
+                console.debug("Wrote note to ", path)
+                fs.publish().then(() => {
+                    console.debug("Published")
+                })
             })
-        })
+        }
     })
 }).catch(err => {
     console.error(err)
