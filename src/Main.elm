@@ -25,7 +25,10 @@ type Unauthenticated
     | PleaseSignIn
 
 type Authenticated
-    = Note { editorBuffer : String }
+    = Note { editorBuffer : String
+           , dirty : Bool
+           , saving : Bool
+           }
 
 
 type Msg
@@ -34,7 +37,7 @@ type Msg
     | WebnativeSignIn
     | WebnativeInit Bool
     | UpdateEditorBuffer String
-    | PersistNote
+    | PersistNote {noteName : String, noteData : String}
 
 
 type LoadingMessage
@@ -81,10 +84,14 @@ update msg model =
             ( model, Ports.redirectToLobby () )
 
         UpdateEditorBuffer updatedText ->
-            ( Authed <| Note { editorBuffer = updatedText}, Cmd.none )
+            ( Authed <| Note { editorBuffer = updatedText
+                             , dirty = True
+                             , saving = False
+                             }
+            , Cmd.none )
 
-        PersistNote ->
-            ( model, Ports.persistNote () )
+        PersistNote {noteName, noteData} ->
+            ( model, Ports.persistNote {noteName = noteName, noteData = noteData} )
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
@@ -94,7 +101,10 @@ subscriptions _ =
 initAuthState : Bool -> Model
 initAuthState isAuthenticated =
     if isAuthenticated then
-        Authed <| Note { editorBuffer = "" }
+        Authed <| Note { editorBuffer = ""
+                       , dirty = False
+                       , saving = False
+                       }
 
     else
         Unauthed PleaseSignIn
@@ -156,14 +166,12 @@ authenticated model =
                     ]
                     [ Html.text editorBuffer ]
 
-                , Html.button [ Event.onClick PersistNote ]
+                , Html.button [ Event.onClick <| PersistNote {noteName = "testing2", noteData = editorBuffer} ]
                     [ Html.text "Save" ]
-
-                , Html.text editorBuffer
                 ]
 
 
-unauthenticated : Unauthenticated -> Html msg
+unauthenticated : Unauthenticated -> Html Msg
 unauthenticated model =
     case model of
         Init ->
@@ -187,12 +195,14 @@ unauthenticated model =
 
         PleaseSignIn ->
             unauthedPage
-                [ Html.button [ css [ bg_gray_50 ] ]
+                [ Html.button [ css [ bg_gray_50 ]
+                              , Event.onClick WebnativeSignIn
+                              ]
                     [ Html.text "Sign in with Fission" ]
                 ]
 
 
-unauthedPage : List (Html msg) -> Html msg
+unauthedPage : List (Html Msg) -> Html Msg
 unauthedPage inner =
     let
         common =
@@ -216,7 +226,7 @@ unauthedPage inner =
     mainContainer (common ++ inner)
 
 
-mainContainer : List (Html msg) -> Html msg
+mainContainer : List (Html Msg) -> Html Msg
 mainContainer =
     Html.main_
         [ css
