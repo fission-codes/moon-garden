@@ -2,8 +2,6 @@ module Main exposing (main)
 
 import Browser
 import Html.Styled as Html exposing (Html)
-import Html.Styled.Attributes as Attr exposing (css)
-import Html.Styled.Events as Event exposing (..)
 import Ports
 import Random
 import Tailwind.Utilities exposing (..)
@@ -28,7 +26,8 @@ type Unauthenticated
 
 type Authenticated
     = Note
-        { editorBuffer : String
+        { titleBuffer : String
+        , editorBuffer : String
         , dirty : Bool
         , saving : Bool
         }
@@ -39,6 +38,7 @@ type Msg
     | GeneratedLoadingMessage LoadingMessage
     | WebnativeSignIn
     | WebnativeInit Bool
+    | UpdateTitleBuffer String
     | UpdateEditorBuffer String
     | PersistNote { noteName : String, noteData : String }
 
@@ -86,15 +86,33 @@ update msg model =
         WebnativeSignIn ->
             ( model, Ports.redirectToLobby () )
 
+        UpdateTitleBuffer updatedTitle ->
+            case model of
+                Authed (Note note) ->
+                    ( Authed <|
+                        Note
+                            { note
+                                | titleBuffer = updatedTitle
+                            }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( model, Cmd.none )
+
         UpdateEditorBuffer updatedText ->
-            ( Authed <|
-                Note
-                    { editorBuffer = updatedText
-                    , dirty = True
-                    , saving = False
-                    }
-            , Cmd.none
-            )
+            case model of
+                Authed (Note note) ->
+                    ( Authed <|
+                        Note
+                            { note
+                                | editorBuffer = updatedText
+                            }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( model, Cmd.none )
 
         PersistNote { noteName, noteData } ->
             ( model, Ports.persistNote { noteName = noteName, noteData = noteData } )
@@ -110,7 +128,8 @@ initAuthState isAuthenticated =
     if isAuthenticated then
         Authed <|
             Note
-                { editorBuffer = ""
+                { titleBuffer = ""
+                , editorBuffer = ""
                 , dirty = False
                 , saving = False
                 }
@@ -164,18 +183,49 @@ body model =
 authenticated : Authenticated -> Html Msg
 authenticated model =
     case model of
-        Note { editorBuffer } ->
-            mainContainer
-                [ Html.h1 []
-                    [ Html.text "yay logged in" ]
-                , Html.textarea
-                    [ Event.onInput UpdateEditorBuffer
-                    , Attr.placeholder "Type your note here. Markdown supported!"
+        Note note ->
+            View.appShellSidebar
+                { navigation =
+                    [ View.leafyButton
+                        { label = "Create New Note"
+                        , onClick = NoOp
+                        }
+                    , View.searchInput
+                        { styles = [ mt_8 ]
+                        , placeholder = "Type to Search"
+                        , onInput = \_ -> NoOp
+                        }
                     ]
-                    [ Html.text editorBuffer ]
-                , Html.button [ Event.onClick <| PersistNote { noteName = "testing2", noteData = editorBuffer } ]
-                    [ Html.text "Save" ]
-                ]
+                , main =
+                    [ View.titleInput
+                        { onInput = UpdateTitleBuffer
+                        , value = note.titleBuffer
+                        , styles = []
+                        }
+                    , View.autoresizeTextarea
+                        { onChange = UpdateEditorBuffer
+                        , content = note.editorBuffer
+                        , styles = [ View.editorTextareaStyle ]
+                        }
+                    , View.leafyButton
+                        { label = "Save"
+                        , onClick =
+                            PersistNote
+                                { noteName = note.titleBuffer
+                                , noteData = note.editorBuffer
+                                }
+                        }
+
+                    -- , View.wikilinksSection
+                    --     { styles = [ mt_8 ]
+                    --     , wikilinks =
+                    --         [ View.wikilinkExisting { label = "WNFS", link = "#" }
+                    --         , View.wikilinkExisting { label = "Fission", link = "#" }
+                    --         , View.wikilinkNew { label = "Markdown", onClickCreate = NoOp }
+                    --         ]
+                    --     }
+                    ]
+                }
 
 
 unauthenticated : Unauthenticated -> Html Msg
@@ -192,15 +242,3 @@ unauthenticated model =
 
         PleaseSignIn ->
             View.signinScreen { onClickSignIn = WebnativeSignIn }
-
-
-mainContainer : List (Html Msg) -> Html Msg
-mainContainer =
-    Html.main_
-        [ css
-            [ p_6
-            , text_bluegray_800
-            , bg_beige_100
-            , flex_grow
-            ]
-        ]

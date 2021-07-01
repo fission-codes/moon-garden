@@ -381,8 +381,8 @@ leafButtonStyle =
         ]
 
 
-buttonCreateNewNote : { onClick : msg } -> Html msg
-buttonCreateNewNote element =
+leafyButton : { label : String, onClick : msg } -> Html msg
+leafyButton element =
     button
         [ Events.onClick element.onClick
         , css
@@ -390,7 +390,7 @@ buttonCreateNewNote element =
             , py_3
             ]
         ]
-        [ text "Create New Note" ]
+        [ text element.label ]
 
 
 titleInput :
