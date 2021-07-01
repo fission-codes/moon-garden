@@ -7,6 +7,7 @@ import Html.Styled.Events as Event exposing (..)
 import Ports
 import Random as Random
 import Tailwind.Utilities exposing (..)
+import View as View
 
 
 
@@ -175,55 +176,16 @@ unauthenticated : Unauthenticated -> Html Msg
 unauthenticated model =
     case model of
         Init ->
-            unauthedPage
-                [ Html.p []
-                    [ Html.text "Initializing..." ]
-                ]
+            View.loadingScreen {message = "Initializing...", isError = False}
 
         Loading (LoadingMessage message) ->
-            unauthedPage
-                [ Html.p []
-                    [ Html.text message ]
-                ]
+            View.loadingScreen {message = message, isError = False}
 
         Cancelled ->
-            unauthedPage
-                [ Html.text "Cancelled sign in"
-                , Html.button [ css [ bg_gray_50 ] ]
-                    [ Html.text "Sign in with Fission" ]
-                ]
+            View.loadingScreen {message = "Auth cancelled", isError = True}
 
         PleaseSignIn ->
-            unauthedPage
-                [ Html.button [ css [ bg_gray_50 ]
-                              , Event.onClick WebnativeSignIn
-                              ]
-                    [ Html.text "Sign in with Fission" ]
-                ]
-
-
-unauthedPage : List (Html Msg) -> Html Msg
-unauthedPage inner =
-    let
-        common =
-            [ Html.h1
-                [ css
-                    [ font_title
-                    , text_4xl
-                    , font_thin
-                    ]
-                ]
-                [ Html.text "Welcome to 🌛 Moon Garden! 🌱" ]
-            , Html.p
-                [ css
-                    [ font_body
-                    , mt_6
-                    ]
-                ]
-                [ Html.text "A digital garden / second brain, built on Fission. Please take a seat and plant a seed." ]
-            ]
-    in
-    mainContainer (common ++ inner)
+            View.signinScreen {onClickSignIn = WebnativeSignIn}
 
 
 mainContainer : List (Html Msg) -> Html Msg
