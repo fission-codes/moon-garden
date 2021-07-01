@@ -25,11 +25,13 @@ type Unauthenticated
     | Cancelled
     | PleaseSignIn
 
+
 type Authenticated
-    = Note { editorBuffer : String
-           , dirty : Bool
-           , saving : Bool
-           }
+    = Note
+        { editorBuffer : String
+        , dirty : Bool
+        , saving : Bool
+        }
 
 
 type Msg
@@ -38,7 +40,7 @@ type Msg
     | WebnativeSignIn
     | WebnativeInit Bool
     | UpdateEditorBuffer String
-    | PersistNote {noteName : String, noteData : String}
+    | PersistNote { noteName : String, noteData : String }
 
 
 type LoadingMessage
@@ -85,14 +87,18 @@ update msg model =
             ( model, Ports.redirectToLobby () )
 
         UpdateEditorBuffer updatedText ->
-            ( Authed <| Note { editorBuffer = updatedText
-                             , dirty = True
-                             , saving = False
-                             }
-            , Cmd.none )
+            ( Authed <|
+                Note
+                    { editorBuffer = updatedText
+                    , dirty = True
+                    , saving = False
+                    }
+            , Cmd.none
+            )
 
-        PersistNote {noteName, noteData} ->
-            ( model, Ports.persistNote {noteName = noteName, noteData = noteData} )
+        PersistNote { noteName, noteData } ->
+            ( model, Ports.persistNote { noteName = noteName, noteData = noteData } )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
@@ -102,10 +108,12 @@ subscriptions _ =
 initAuthState : Bool -> Model
 initAuthState isAuthenticated =
     if isAuthenticated then
-        Authed <| Note { editorBuffer = ""
-                       , dirty = False
-                       , saving = False
-                       }
+        Authed <|
+            Note
+                { editorBuffer = ""
+                , dirty = False
+                , saving = False
+                }
 
     else
         Unauthed PleaseSignIn
@@ -128,8 +136,8 @@ randomLoadingMessage =
     , "Follow the white rabbit..."
     , "Counting backwards from Infinity..."
     ]
-    |> Random.uniform "Loading..."
-    |> Random.generate LoadingMessage
+        |> Random.uniform "Loading..."
+        |> Random.generate LoadingMessage
 
 
 
@@ -156,18 +164,16 @@ body model =
 authenticated : Authenticated -> Html Msg
 authenticated model =
     case model of
-        Note {editorBuffer} ->
+        Note { editorBuffer } ->
             mainContainer
                 [ Html.h1 []
                     [ Html.text "yay logged in" ]
-
                 , Html.textarea
                     [ Event.onInput UpdateEditorBuffer
                     , Attr.placeholder "Type your note here. Markdown supported!"
                     ]
                     [ Html.text editorBuffer ]
-
-                , Html.button [ Event.onClick <| PersistNote {noteName = "testing2", noteData = editorBuffer} ]
+                , Html.button [ Event.onClick <| PersistNote { noteName = "testing2", noteData = editorBuffer } ]
                     [ Html.text "Save" ]
                 ]
 
@@ -176,16 +182,16 @@ unauthenticated : Unauthenticated -> Html Msg
 unauthenticated model =
     case model of
         Init ->
-            View.loadingScreen {message = "Initializing...", isError = False}
+            View.loadingScreen { message = "Initializing...", isError = False }
 
         Loading (LoadingMessage message) ->
-            View.loadingScreen {message = message, isError = False}
+            View.loadingScreen { message = message, isError = False }
 
         Cancelled ->
-            View.loadingScreen {message = "Auth cancelled", isError = True}
+            View.loadingScreen { message = "Auth cancelled", isError = True }
 
         PleaseSignIn ->
-            View.signinScreen {onClickSignIn = WebnativeSignIn}
+            View.signinScreen { onClickSignIn = WebnativeSignIn }
 
 
 mainContainer : List (Html Msg) -> Html Msg
