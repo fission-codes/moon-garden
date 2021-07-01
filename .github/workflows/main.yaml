@@ -51,7 +51,7 @@ jobs:
       - name: Install Dependencies
         run: yarn install --network-concurrency 1
 
-      - name: Build & Test
+      - name: Build
         run: yarn build
 
       - name: Publish to Fission
