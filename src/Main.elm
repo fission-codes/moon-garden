@@ -53,7 +53,9 @@ type alias EditNoteState =
 
 
 type Msg
-    = NoOp -- FIXME Replace with navigation messages
+    = NoOp -- FIXME Replace the need for this
+    | UrlChanged Url
+    | UrlRequested Browser.UrlRequest
     | GeneratedLoadingMessage LoadingMessage
     | WebnativeSignIn
     | WebnativeInit Bool
@@ -83,8 +85,8 @@ main =
         , update = update
         , subscriptions = subscriptions
         , view = view
-        , onUrlChange = \_ -> NoOp
-        , onUrlRequest = \_ -> NoOp
+        , onUrlChange = UrlChanged
+        , onUrlRequest = UrlRequested
         }
 
 
@@ -113,6 +115,23 @@ update msg model =
     case msg of
         NoOp ->
             ( model, Cmd.none )
+
+        UrlChanged url ->
+            ( { model | url = url }
+            , Cmd.none
+            )
+
+        UrlRequested request ->
+            case request of
+                Browser.External link ->
+                    ( model
+                    , Navigation.load link
+                    )
+
+                Browser.Internal url ->
+                    ( { model | url = url }
+                    , Navigation.pushUrl model.navKey (Url.toString url)
+                    )
 
         GeneratedLoadingMessage loading ->
             ( { model | state = Unauthed (Loading loading) }
