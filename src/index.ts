@@ -3,6 +3,9 @@ import { Elm } from './Main.elm'
 import * as wn from 'webnative'
 
 const elmApp = Elm.Main.init({
+    flags: {
+        randomness: crypto.getRandomValues(new Int32Array(1))[0]
+    }
 })
 
 let state: wn.State | null = null;

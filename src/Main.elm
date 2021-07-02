@@ -1,10 +1,12 @@
 module Main exposing (main)
 
 import Browser
+import Browser.Navigation as Navigation
 import Html.Styled as Html exposing (Html)
 import Ports
 import Random
 import Tailwind.Utilities exposing (..)
+import Url exposing (Url)
 import View
 
 
@@ -18,8 +20,7 @@ type Model
 
 
 type Unauthenticated
-    = Init
-    | Loading LoadingMessage
+    = Loading LoadingMessage
     | Cancelled
     | PleaseSignIn
 
@@ -48,7 +49,8 @@ type LoadingMessage
 
 
 type alias Flags =
-    ()
+    { randomness : Int
+    }
 
 
 
@@ -58,13 +60,26 @@ type alias Flags =
 main : Program Flags Model Msg
 main =
     Browser.application
-        { init = \_ _ _ -> ( Unauthed Init, Cmd.map GeneratedLoadingMessage randomLoadingMessage )
+        { init = init
         , update = update
         , subscriptions = subscriptions
         , view = view
         , onUrlChange = \_ -> NoOp
         , onUrlRequest = \_ -> NoOp
         }
+
+
+init : Flags -> Url -> Navigation.Key -> ( Model, Cmd Msg )
+init flags _ _ =
+    let
+        loadingMessage =
+            Random.initialSeed flags.randomness
+                |> Random.step randomLoadingMessage
+                |> Tuple.first
+    in
+    ( Unauthed (Loading (LoadingMessage loadingMessage))
+    , Cmd.none
+    )
 
 
 
@@ -138,7 +153,7 @@ initAuthState isAuthenticated =
         Unauthed PleaseSignIn
 
 
-randomLoadingMessage : Cmd LoadingMessage
+randomLoadingMessage : Random.Generator String
 randomLoadingMessage =
     -- Source: https://gist.github.com/meain/6440b706a97d2dd71574769517e7ed32
     [ "Reticulating splines..."
@@ -156,7 +171,6 @@ randomLoadingMessage =
     , "Counting backwards from Infinity..."
     ]
         |> Random.uniform "Loading..."
-        |> Random.generate LoadingMessage
 
 
 
@@ -190,11 +204,12 @@ authenticated model =
                         { label = "Create New Note"
                         , onClick = NoOp
                         }
-                    , View.searchInput
-                        { styles = [ mt_8 ]
-                        , placeholder = "Type to Search"
-                        , onInput = \_ -> NoOp
-                        }
+
+                    -- , View.searchInput
+                    --     { styles = [ mt_8 ]
+                    --     , placeholder = "Type to Search"
+                    --     , onInput = \_ -> NoOp
+                    --     }
                     ]
                 , main =
                     [ View.titleInput
@@ -231,9 +246,6 @@ authenticated model =
 unauthenticated : Unauthenticated -> Html Msg
 unauthenticated model =
     case model of
-        Init ->
-            View.loadingScreen { message = "Initializing...", isError = False }
-
         Loading (LoadingMessage message) ->
             View.loadingScreen { message = message, isError = False }
 
