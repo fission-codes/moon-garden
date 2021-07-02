@@ -30,9 +30,7 @@ wn.initialise({
         wn.redirectToLobby(state.permissions)
     })
 
-    elmApp.ports.webnativeInit.send(state.authenticated)
-
-    elmApp.ports.persistNote.subscribe(({noteName, noteData}) => {
+    elmApp.ports.persistNote.subscribe(({noteName, noteData}: { noteName: string, noteData: string }) => {
         const path = wn.path.file("public", "Documents", "Notes", `${noteName}.md`)
 
         if (state.authenticated) {
@@ -48,6 +46,20 @@ wn.initialise({
             })
         }
     })
+
+    elmApp.ports.loadNote.subscribe(async (noteName: string) => {
+        console.log("loadNote", state.authenticated, noteName)
+        if (!state.authenticated) return
+
+        const path = wn.path.file("public", "Documents", "Notes", `${noteName}.md`)
+        elmApp.ports.loadedNote.send({
+            noteName,
+            noteData: new TextDecoder().decode(await state.fs.read(path) as Uint8Array)
+        })
+    })
+
+    elmApp.ports.webnativeInit.send(state.authenticated)
+
 
     loadNotesLs()
 }).catch(err => {

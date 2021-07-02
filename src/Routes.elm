@@ -29,8 +29,10 @@ parse url =
 routes : Parser (Route -> Route) Route
 routes =
     oneOf
-        [ map EditNote (s "edit-note" </> string)
-        , map Dashboard top
+        [ map (EditNote << Maybe.withDefault "" << Url.percentDecode)
+            (top </> s "edit-note" </> string)
+        , map Dashboard
+            top
         ]
 
 
@@ -38,7 +40,7 @@ toLink : Route -> String
 toLink route =
     case route of
         Dashboard ->
-            "#"
+            "#/"
 
         EditNote name ->
-            "#" ++ Url.percentEncode name
+            "#/edit-note/" ++ Url.percentEncode name

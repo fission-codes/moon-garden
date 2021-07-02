@@ -61,6 +61,7 @@ type Msg
     | UpdateTitleBuffer String
     | UpdateEditorBuffer String
     | PersistNote { noteName : String, noteData : String }
+    | LoadedNote { noteName : String, noteData : String }
     | LoadedNotes (Result String (Dict String WNFSEntry))
 
 
@@ -116,9 +117,8 @@ update msg model =
             ( model, Cmd.none )
 
         UrlChanged url ->
-            ( { model | url = url }
-            , Cmd.none
-            )
+            { model | url = url }
+                |> handleUrlChange
 
         UrlRequested request ->
             case request of
@@ -133,9 +133,9 @@ update msg model =
                     )
 
         WebnativeInit isAuthed ->
-            ( { model
-                | state =
-                    if isAuthed then
+            if isAuthed then
+                { model
+                    | state =
                         Authed
                             { notes = Dict.empty
                             , state =
@@ -144,12 +144,13 @@ update msg model =
                                     , editorBuffer = ""
                                     }
                             }
+                }
+                    |> handleUrlChange
 
-                    else
-                        Unauthed PleaseSignIn
-              }
-            , Cmd.none
-            )
+            else
+                ( { model | state = Unauthed PleaseSignIn }
+                , Cmd.none
+                )
 
         WebnativeSignIn ->
             ( model, Ports.redirectToLobby () )
@@ -197,6 +198,21 @@ update msg model =
         PersistNote { noteName, noteData } ->
             ( model, Ports.persistNote { noteName = noteName, noteData = noteData } )
 
+        LoadedNote { noteName, noteData } ->
+            updateAuthed
+                (\authed ->
+                    ( { authed
+                        | state =
+                            EditNote
+                                { titleBuffer = noteName
+                                , editorBuffer = noteData
+                                }
+                      }
+                    , Cmd.none
+                    )
+                )
+                model
+
 
 updateAuthed : (Authenticated -> ( Authenticated, Cmd Msg )) -> Model -> ( Model, Cmd Msg )
 updateAuthed updater model =
@@ -225,11 +241,23 @@ updateEditNote updater authed =
             )
 
 
+handleUrlChange : Model -> ( Model, Cmd Msg )
+handleUrlChange model =
+    case Debug.log "route" <| Routes.parse (Debug.log "url" model.url) of
+        Just (Routes.EditNote name) ->
+            ( model, Ports.loadNote name )
+
+        _ ->
+            -- TODO: Implement a dashboard, go back to that
+            ( model, Cmd.none )
+
+
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.batch
         [ Ports.webnativeInit WebnativeInit
         , Ports.loadedNotesLs (withDecoding (D.dict decodeWNFSEntry) LoadedNotes)
+        , Ports.loadedNote LoadedNote
         ]
 
 
@@ -345,7 +373,7 @@ viewRecentNote : MarkdownNoteRef -> Html Msg
 viewRecentNote note =
     View.referencedNoteCard
         { label = note.name
-        , link = "#"
+        , link = Routes.toLink (Routes.EditNote note.name)
         , styles = []
         }
 
