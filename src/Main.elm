@@ -310,7 +310,7 @@ viewAuthenticated model =
                 { navigation =
                     [ View.leafyButton
                         { label = "Create New Note"
-                        , onClick = NoOp
+                        , onClick = LoadedNote { noteName = "", noteData = "" }
                         }
                     , View.searchInput
                         { styles = [ mt_8 ]
