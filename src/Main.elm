@@ -35,10 +35,13 @@ type alias Authenticated =
 
 
 type AuthenticatedState
-    = EditNote
-        { titleBuffer : String
-        , editorBuffer : String
-        }
+    = EditNote EditNoteState
+
+
+type alias EditNoteState =
+    { titleBuffer : String
+    , editorBuffer : String
+    }
 
 
 type Msg
@@ -94,7 +97,7 @@ init flags _ _ =
 -- 🔁 --------------------------------------------------------------------------
 
 
-update : Msg -> Model -> ( Model, Cmd msg )
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         NoOp ->
@@ -110,42 +113,30 @@ update msg model =
             ( model, Ports.redirectToLobby () )
 
         UpdateTitleBuffer updatedTitle ->
-            case model of
-                Authed authed ->
-                    case authed.state of
-                        EditNote note ->
-                            ( Authed <|
-                                { authed
-                                    | state =
-                                        EditNote
-                                            { note
-                                                | titleBuffer = updatedTitle
-                                            }
-                                }
-                            , Cmd.none
-                            )
-
-                _ ->
-                    ( model, Cmd.none )
+            updateAuthed
+                (updateEditNote
+                    (\note ->
+                        ( { note
+                            | titleBuffer = updatedTitle
+                          }
+                        , Cmd.none
+                        )
+                    )
+                )
+                model
 
         UpdateEditorBuffer updatedText ->
-            case model of
-                Authed authed ->
-                    case authed.state of
-                        EditNote note ->
-                            ( Authed <|
-                                { authed
-                                    | state =
-                                        EditNote
-                                            { note
-                                                | editorBuffer = updatedText
-                                            }
-                                }
-                            , Cmd.none
-                            )
-
-                _ ->
-                    ( model, Cmd.none )
+            updateAuthed
+                (updateEditNote
+                    (\note ->
+                        ( { note
+                            | editorBuffer = updatedText
+                          }
+                        , Cmd.none
+                        )
+                    )
+                )
+                model
 
         LoadedNotes result ->
             case ( model, result ) of
@@ -159,6 +150,33 @@ update msg model =
 
         PersistNote { noteName, noteData } ->
             ( model, Ports.persistNote { noteName = noteName, noteData = noteData } )
+
+
+updateAuthed : (Authenticated -> ( Authenticated, Cmd Msg )) -> Model -> ( Model, Cmd Msg )
+updateAuthed updater model =
+    case model of
+        Authed authed ->
+            let
+                ( newAuthed, cmds ) =
+                    updater authed
+            in
+            ( Authed newAuthed, cmds )
+
+        _ ->
+            ( model, Cmd.none )
+
+
+updateEditNote : (EditNoteState -> ( EditNoteState, Cmd Msg )) -> Authenticated -> ( Authenticated, Cmd Msg )
+updateEditNote updater authed =
+    case authed.state of
+        EditNote editNoteState ->
+            let
+                ( newState, cmds ) =
+                    updater editNoteState
+            in
+            ( { authed | state = EditNote newState }
+            , cmds
+            )
 
 
 subscriptions : Model -> Sub Msg
