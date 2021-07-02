@@ -43,10 +43,13 @@ wn.initialise({
                 console.debug("Wrote note to ", path)
                 fs.publish().then(() => {
                     console.debug("Published")
+                    loadNotesLs()
                 })
             })
         }
     })
+
+    loadNotesLs()
 }).catch(err => {
     console.error(err)
 })
@@ -54,3 +57,21 @@ wn.initialise({
 window["wn"] = wn
 window["elmApp"] = elmApp
 window["getState"] = () => state
+
+
+async function loadNotesLs() {
+    if (!state.authenticated) return
+    const dir = wn.path.directory("public", "Documents", "Notes")
+    const entries = await state.fs.ls(dir)
+    let entriesWithMetadata = {}
+    for (const [key, entry] of Object.entries(entries)) {
+        const path = wn.path.combine(dir, entry.isFile ? wn.path.file(entry.name) : wn.path.directory(entry.name))
+        const entr = await state.fs.get(path)
+        entriesWithMetadata[key] = {
+            ...entry,
+            // @ts-ignore
+            metadata: entr.header.metadata
+        }
+    }
+    elmApp.ports.loadedNotesLs.send(entriesWithMetadata)
+}

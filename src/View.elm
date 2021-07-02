@@ -324,6 +324,22 @@ searchGrid content =
         content
 
 
+searchResults : List (Html msg) -> Html msg
+searchResults content =
+    ul
+        [ css
+            [ flex
+            , flex_col
+            , space_y_4
+            , mt_4
+            ]
+        ]
+        (List.map
+            (\item -> li [ css [ flex, flex_row ] ] [ item ])
+            content
+        )
+
+
 referencedNoteCard :
     { label : String
     , link : String
