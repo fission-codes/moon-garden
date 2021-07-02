@@ -482,6 +482,7 @@ autoresizeTextarea element =
             ]
         , textarea
             [ placeholder "Start writing markdown and use [[wikilinks]]"
+            , value element.content
             , css
                 [ bg_transparent
                 , text_gray_900
