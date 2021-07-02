@@ -75,7 +75,10 @@ viewEditor model =
     View.appShellSidebar
         { navigation =
             List.concat
-                [ [ View.buttonCreateNewNote { onClick = NoOp }
+                [ [ View.leafyButton
+                        { label = "Create New Note"
+                        , onClick = NoOp
+                        }
                   , View.searchInput
                         { styles = [ mt_8 ]
                         , placeholder = "Type to Search"
@@ -159,5 +162,5 @@ viewDashboardEmpty =
             , Html.br [] []
             , Html.text "If you come back here afterwards, you'll have a place to look at the seeds you've planted recently and a way to search through them."
             ]
-        , View.buttonCreateNewNote { onClick = NoOp }
+        , View.leafyButton { onClick = NoOp, label = "Create New Note" }
         ]

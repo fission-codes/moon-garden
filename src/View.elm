@@ -324,6 +324,22 @@ searchGrid content =
         content
 
 
+searchResults : List (Html msg) -> Html msg
+searchResults content =
+    ul
+        [ css
+            [ flex
+            , flex_col
+            , space_y_4
+            , mt_4
+            ]
+        ]
+        (List.map
+            (\item -> li [ css [ flex, flex_row ] ] [ item ])
+            content
+        )
+
+
 referencedNoteCard :
     { label : String
     , link : String
@@ -381,8 +397,8 @@ leafButtonStyle =
         ]
 
 
-buttonCreateNewNote : { onClick : msg } -> Html msg
-buttonCreateNewNote element =
+leafyButton : { label : String, onClick : msg } -> Html msg
+leafyButton element =
     button
         [ Events.onClick element.onClick
         , css
@@ -390,7 +406,7 @@ buttonCreateNewNote element =
             , py_3
             ]
         ]
-        [ text "Create New Note" ]
+        [ text element.label ]
 
 
 titleInput :
