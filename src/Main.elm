@@ -57,6 +57,7 @@ type alias EditNoteState =
 type PersistState
     = PersistedAs String
     | NotPersistedYet
+    | LoadingNote
 
 
 type Msg
@@ -67,8 +68,8 @@ type Msg
     | WebnativeInit Bool
     | UpdateTitleBuffer String
     | UpdateEditorBuffer String
-    | PersistNote { noteName : String, noteData : String }
     | LoadedNote { noteName : String, noteData : String }
+    | PersistedNote { noteName : String, noteData : String }
     | LoadedNotes (Result String (Dict String WNFSEntry))
     | CreateNewNote
 
@@ -188,8 +189,16 @@ update msg model =
                         (\note ->
                             { note
                                 | editorBuffer = updatedText
+                                , persistState = NotPersistedYet
                             }
                                 |> Return.singleton
+                                |> Return.effect_
+                                    (\{ titleBuffer, editorBuffer } ->
+                                        Ports.persistNote
+                                            { noteName = titleBuffer
+                                            , noteData = editorBuffer
+                                            }
+                                    )
                                 |> returnEditNote authed
                                 |> returnAuthed model
                         )
@@ -212,9 +221,6 @@ update msg model =
                 )
                 model
 
-        PersistNote { noteName, noteData } ->
-            ( model, Ports.persistNote { noteName = noteName, noteData = noteData } )
-
         LoadedNote { noteName, noteData } ->
             updateAuthed
                 (\authed ->
@@ -225,6 +231,25 @@ update msg model =
                         |> Return.singleton
                         |> returnEditNote authed
                         |> returnAuthed model
+                )
+                model
+
+        PersistedNote { noteName, noteData } ->
+            updateAuthed
+                (\authed ->
+                    updateEditNote
+                        (\note ->
+                            if note.titleBuffer == noteName && note.editorBuffer == noteData then
+                                { note | persistState = PersistedAs noteName }
+                                    |> Return.singleton
+                                    |> returnEditNote authed
+                                    |> returnAuthed model
+
+                            else
+                                model
+                                    |> Return.singleton
+                        )
+                        authed
                 )
                 model
 
@@ -283,9 +308,21 @@ handleUrlChange : Model -> Return Msg Model
 handleUrlChange model =
     case Routes.parse model.url of
         Just (Routes.EditNote name) ->
-            ( model
-            , Ports.loadNote name
-            )
+            updateAuthed
+                (\authed ->
+                    Return.return
+                        { authed
+                            | state =
+                                EditNote
+                                    { titleBuffer = name
+                                    , editorBuffer = ""
+                                    , persistState = LoadingNote
+                                    }
+                        }
+                        (Ports.loadNote name)
+                        |> returnAuthed model
+                )
+                model
 
         _ ->
             -- TODO: Implement a dashboard, go back to that
@@ -300,6 +337,7 @@ subscriptions _ =
         [ Ports.webnativeInit WebnativeInit
         , Ports.loadedNotesLs (withDecoding (D.dict decodeWNFSEntry) LoadedNotes)
         , Ports.loadedNote LoadedNote
+        , Ports.persistedNote PersistedNote
         ]
 
 
@@ -376,14 +414,6 @@ viewAuthenticated model =
                         { onChange = UpdateEditorBuffer
                         , content = note.editorBuffer
                         , styles = [ View.editorTextareaStyle ]
-                        }
-                    , View.leafyButton
-                        { label = "Save"
-                        , onClick =
-                            PersistNote
-                                { noteName = note.titleBuffer
-                                , noteData = note.editorBuffer
-                                }
                         }
 
                     -- , View.wikilinksSection

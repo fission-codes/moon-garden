@@ -1,6 +1,7 @@
 // @ts-ignore
 import { Elm } from './Main.elm'
 import * as wn from 'webnative'
+import debounce from 'lodash/debounce'
 
 const elmApp = Elm.Main.init({
     flags: {
@@ -19,7 +20,7 @@ wn.initialise({
             creator: "Fission"
         },
         fs: {
-            public: [ wn.path.directory("Documents", "Notes") ]
+            public: [wn.path.directory("Documents", "Notes")]
         }
     }
 }).then(initState => {
@@ -30,22 +31,20 @@ wn.initialise({
         wn.redirectToLobby(state.permissions)
     })
 
-    elmApp.ports.persistNote.subscribe(({noteName, noteData}: { noteName: string, noteData: string }) => {
+    elmApp.ports.persistNote.subscribe(debounce(async ({ noteName, noteData }: { noteName: string, noteData: string }) => {
+        if (!state.authenticated) return
+        
+        console.log("persisting", noteName)
+
         const path = wn.path.file("public", "Documents", "Notes", `${noteName}.md`)
 
-        if (state.authenticated) {
-            const fs = state.fs
+        await state.fs.write(path, noteData)
+        await state.fs.publish()
 
-            fs.write(path, noteData).then(() => {
-                console.debug("Content: ", noteData)
-                console.debug("Wrote note to ", path)
-                fs.publish().then(() => {
-                    console.debug("Published")
-                    loadNotesLs()
-                })
-            })
-        }
-    })
+        elmApp.ports.persistedNote.send({ noteName, noteData })
+
+        await loadNotesLs()
+    }, 1500))
 
     elmApp.ports.loadNote.subscribe(async (noteName: string) => {
         console.log("loadNote", state.authenticated, noteName)
