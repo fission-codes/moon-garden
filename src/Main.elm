@@ -8,6 +8,7 @@ import Json.Decode as D exposing (Decoder)
 import List.Extra as List
 import Ports
 import Random
+import Routes exposing (Route)
 import Tailwind.Utilities exposing (..)
 import Url exposing (Url)
 import View
@@ -17,7 +18,14 @@ import View
 -- 🔠 ---------------------------------------------------------------------------
 
 
-type Model
+type alias Model =
+    { url : Url
+    , navKey : Navigation.Key
+    , state : State
+    }
+
+
+type State
     = Unauthed Unauthenticated
     | Authed Authenticated -- FIXME add more actions to Authenticated
 
@@ -81,14 +89,17 @@ main =
 
 
 init : Flags -> Url -> Navigation.Key -> ( Model, Cmd Msg )
-init flags _ _ =
+init flags url navKey =
     let
         loadingMessage =
             Random.initialSeed flags.randomness
                 |> Random.step randomLoadingMessage
                 |> Tuple.first
     in
-    ( Unauthed (Loading (LoadingMessage loadingMessage))
+    ( { url = url
+      , navKey = navKey
+      , state = Unauthed (Loading (LoadingMessage loadingMessage))
+      }
     , Cmd.none
     )
 
@@ -104,10 +115,28 @@ update msg model =
             ( model, Cmd.none )
 
         GeneratedLoadingMessage loading ->
-            ( Unauthed (Loading loading), Cmd.none )
+            ( { model | state = Unauthed (Loading loading) }
+            , Cmd.none
+            )
 
         WebnativeInit isAuthed ->
-            ( initAuthState isAuthed, Cmd.none )
+            ( { model
+                | state =
+                    if isAuthed then
+                        Authed
+                            { notes = Dict.empty
+                            , state =
+                                EditNote
+                                    { titleBuffer = ""
+                                    , editorBuffer = ""
+                                    }
+                            }
+
+                    else
+                        Unauthed PleaseSignIn
+              }
+            , Cmd.none
+            )
 
         WebnativeSignIn ->
             ( model, Ports.redirectToLobby () )
@@ -139,14 +168,18 @@ update msg model =
                 model
 
         LoadedNotes result ->
-            case ( model, result ) of
-                ( Authed authed, Ok entries ) ->
-                    ( Authed { authed | notes = entries }
-                    , Cmd.none
-                    )
+            updateAuthed
+                (\authed ->
+                    case result of
+                        Ok notes ->
+                            ( { authed | notes = notes }
+                            , Cmd.none
+                            )
 
-                _ ->
-                    ( model, Cmd.none )
+                        Err _ ->
+                            ( authed, Cmd.none )
+                )
+                model
 
         PersistNote { noteName, noteData } ->
             ( model, Ports.persistNote { noteName = noteName, noteData = noteData } )
@@ -154,13 +187,13 @@ update msg model =
 
 updateAuthed : (Authenticated -> ( Authenticated, Cmd Msg )) -> Model -> ( Model, Cmd Msg )
 updateAuthed updater model =
-    case model of
+    case model.state of
         Authed authed ->
             let
                 ( newAuthed, cmds ) =
                     updater authed
             in
-            ( Authed newAuthed, cmds )
+            ( { model | state = Authed newAuthed }, cmds )
 
         _ ->
             ( model, Cmd.none )
@@ -185,22 +218,6 @@ subscriptions _ =
         [ Ports.webnativeInit WebnativeInit
         , Ports.loadedNotesLs (withDecoding (D.dict decodeWNFSEntry) LoadedNotes)
         ]
-
-
-initAuthState : Bool -> Model
-initAuthState isAuthenticated =
-    if isAuthenticated then
-        Authed <|
-            { notes = Dict.empty
-            , state =
-                EditNote
-                    { titleBuffer = ""
-                    , editorBuffer = ""
-                    }
-            }
-
-    else
-        Unauthed PleaseSignIn
 
 
 randomLoadingMessage : Random.Generator String
@@ -236,7 +253,7 @@ view model =
 
 body : Model -> Html Msg
 body model =
-    case model of
+    case model.state of
         Unauthed unauthedState ->
             unauthenticated unauthedState
 
