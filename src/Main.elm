@@ -34,12 +34,11 @@ type alias Authenticated =
     }
 
 
-type alias AuthenticatedState =
-    { titleBuffer : String
-    , editorBuffer : String
-    , dirty : Bool
-    , saving : Bool
-    }
+type AuthenticatedState
+    = EditNote
+        { titleBuffer : String
+        , editorBuffer : String
+        }
 
 
 type Msg
@@ -113,19 +112,18 @@ update msg model =
         UpdateTitleBuffer updatedTitle ->
             case model of
                 Authed authed ->
-                    ( Authed <|
-                        { authed
-                            | state =
-                                let
-                                    note =
-                                        authed.state
-                                in
-                                { note
-                                    | titleBuffer = updatedTitle
+                    case authed.state of
+                        EditNote note ->
+                            ( Authed <|
+                                { authed
+                                    | state =
+                                        EditNote
+                                            { note
+                                                | titleBuffer = updatedTitle
+                                            }
                                 }
-                        }
-                    , Cmd.none
-                    )
+                            , Cmd.none
+                            )
 
                 _ ->
                     ( model, Cmd.none )
@@ -133,19 +131,18 @@ update msg model =
         UpdateEditorBuffer updatedText ->
             case model of
                 Authed authed ->
-                    ( Authed <|
-                        { authed
-                            | state =
-                                let
-                                    note =
-                                        authed.state
-                                in
-                                { note
-                                    | editorBuffer = updatedText
+                    case authed.state of
+                        EditNote note ->
+                            ( Authed <|
+                                { authed
+                                    | state =
+                                        EditNote
+                                            { note
+                                                | editorBuffer = updatedText
+                                            }
                                 }
-                        }
-                    , Cmd.none
-                    )
+                            , Cmd.none
+                            )
 
                 _ ->
                     ( model, Cmd.none )
@@ -178,11 +175,10 @@ initAuthState isAuthenticated =
         Authed <|
             { notes = Dict.empty
             , state =
-                { titleBuffer = ""
-                , editorBuffer = ""
-                , dirty = False
-                , saving = False
-                }
+                EditNote
+                    { titleBuffer = ""
+                    , editorBuffer = ""
+                    }
             }
 
     else
@@ -232,58 +228,56 @@ body model =
 
 authenticated : Authenticated -> Html Msg
 authenticated model =
-    let
-        note =
-            model.state
-    in
-    View.appShellSidebar
-        { navigation =
-            [ View.leafyButton
-                { label = "Create New Note"
-                , onClick = NoOp
-                }
-            , View.searchInput
-                { styles = [ mt_8 ]
-                , placeholder = "Type to Search"
-                , onInput = \_ -> NoOp
-                }
-            , model.notes
-                |> Dict.values
-                |> List.filterMap isMarkdownNote
-                |> List.sortBy (.modificationTime >> (*) -1)
-                |> List.map viewRecentNote
-                |> View.searchResults
-            ]
-        , main =
-            [ View.titleInput
-                { onInput = UpdateTitleBuffer
-                , value = note.titleBuffer
-                , styles = []
-                }
-            , View.autoresizeTextarea
-                { onChange = UpdateEditorBuffer
-                , content = note.editorBuffer
-                , styles = [ View.editorTextareaStyle ]
-                }
-            , View.leafyButton
-                { label = "Save"
-                , onClick =
-                    PersistNote
-                        { noteName = note.titleBuffer
-                        , noteData = note.editorBuffer
+    case model.state of
+        EditNote note ->
+            View.appShellSidebar
+                { navigation =
+                    [ View.leafyButton
+                        { label = "Create New Note"
+                        , onClick = NoOp
                         }
-                }
+                    , View.searchInput
+                        { styles = [ mt_8 ]
+                        , placeholder = "Type to Search"
+                        , onInput = \_ -> NoOp
+                        }
+                    , model.notes
+                        |> Dict.values
+                        |> List.filterMap isMarkdownNote
+                        |> List.sortBy (.modificationTime >> (*) -1)
+                        |> List.map viewRecentNote
+                        |> View.searchResults
+                    ]
+                , main =
+                    [ View.titleInput
+                        { onInput = UpdateTitleBuffer
+                        , value = note.titleBuffer
+                        , styles = []
+                        }
+                    , View.autoresizeTextarea
+                        { onChange = UpdateEditorBuffer
+                        , content = note.editorBuffer
+                        , styles = [ View.editorTextareaStyle ]
+                        }
+                    , View.leafyButton
+                        { label = "Save"
+                        , onClick =
+                            PersistNote
+                                { noteName = note.titleBuffer
+                                , noteData = note.editorBuffer
+                                }
+                        }
 
-            -- , View.wikilinksSection
-            --     { styles = [ mt_8 ]
-            --     , wikilinks =
-            --         [ View.wikilinkExisting { label = "WNFS", link = "#" }
-            --         , View.wikilinkExisting { label = "Fission", link = "#" }
-            --         , View.wikilinkNew { label = "Markdown", onClickCreate = NoOp }
-            --         ]
-            --     }
-            ]
-        }
+                    -- , View.wikilinksSection
+                    --     { styles = [ mt_8 ]
+                    --     , wikilinks =
+                    --         [ View.wikilinkExisting { label = "WNFS", link = "#" }
+                    --         , View.wikilinkExisting { label = "Fission", link = "#" }
+                    --         , View.wikilinkNew { label = "Markdown", onClickCreate = NoOp }
+                    --         ]
+                    --     }
+                    ]
+                }
 
 
 unauthenticated : Unauthenticated -> Html Msg
