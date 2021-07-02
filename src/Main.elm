@@ -56,7 +56,6 @@ type Msg
     = NoOp -- FIXME Replace the need for this
     | UrlChanged Url
     | UrlRequested Browser.UrlRequest
-    | GeneratedLoadingMessage LoadingMessage
     | WebnativeSignIn
     | WebnativeInit Bool
     | UpdateTitleBuffer String
@@ -132,11 +131,6 @@ update msg model =
                     ( { model | url = url }
                     , Navigation.pushUrl model.navKey (Url.toString url)
                     )
-
-        GeneratedLoadingMessage loading ->
-            ( { model | state = Unauthed (Loading loading) }
-            , Cmd.none
-            )
 
         WebnativeInit isAuthed ->
             ( { model
