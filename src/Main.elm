@@ -231,11 +231,15 @@ update msg model =
         CreateNewNote ->
             updateAuthed
                 (\authed ->
-                    { titleBuffer = ""
-                    , editorBuffer = ""
-                    , persistState = NotPersistedYet
-                    }
-                        |> Return.singleton
+                    Return.return
+                        { titleBuffer = ""
+                        , editorBuffer = ""
+                        , persistState = NotPersistedYet
+                        }
+                        -- TODO Change this to route to Routes.EditNote "" once the dashboard is implemeted
+                        (Navigation.pushUrl model.navKey
+                            (Routes.toLink Routes.Dashboard)
+                        )
                         |> returnEditNote authed
                         |> returnAuthed model
                 )
