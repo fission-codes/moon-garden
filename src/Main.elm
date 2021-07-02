@@ -8,6 +8,7 @@ import Json.Decode as D exposing (Decoder)
 import List.Extra as List
 import Ports
 import Random
+import Return exposing (Return)
 import Routes exposing (Route)
 import Tailwind.Utilities exposing (..)
 import Url exposing (Url)
@@ -97,7 +98,7 @@ main =
         }
 
 
-init : Flags -> Url -> Navigation.Key -> ( Model, Cmd Msg )
+init : Flags -> Url -> Navigation.Key -> Return Msg Model
 init flags url navKey =
     let
         loadingMessage =
@@ -105,23 +106,23 @@ init flags url navKey =
                 |> Random.step randomLoadingMessage
                 |> Tuple.first
     in
-    ( { url = url
-      , navKey = navKey
-      , state = Unauthed (Loading (LoadingMessage loadingMessage))
-      }
-    , Cmd.none
-    )
+    { url = url
+    , navKey = navKey
+    , state = Unauthed (Loading (LoadingMessage loadingMessage))
+    }
+        |> Return.singleton
 
 
 
 -- 🔁 --------------------------------------------------------------------------
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
+update : Msg -> Model -> Return Msg Model
 update msg model =
     case msg of
         NoOp ->
-            ( model, Cmd.none )
+            model
+                |> Return.singleton
 
         UrlChanged url ->
             { model | url = url }
@@ -156,36 +157,43 @@ update msg model =
                     |> handleUrlChange
 
             else
-                ( { model | state = Unauthed PleaseSignIn }
-                , Cmd.none
-                )
+                { model | state = Unauthed PleaseSignIn }
+                    |> Return.singleton
 
         WebnativeSignIn ->
-            ( model, Ports.redirectToLobby () )
+            ( model
+            , Ports.redirectToLobby ()
+            )
 
         UpdateTitleBuffer updatedTitle ->
             updateAuthed
-                (updateEditNote
-                    (\note ->
-                        ( { note
-                            | titleBuffer = updatedTitle
-                          }
-                        , Cmd.none
+                (\authed ->
+                    updateEditNote
+                        (\note ->
+                            { note
+                                | titleBuffer = updatedTitle
+                            }
+                                |> Return.singleton
+                                |> returnEditNote authed
+                                |> returnAuthed model
                         )
-                    )
+                        authed
                 )
                 model
 
         UpdateEditorBuffer updatedText ->
             updateAuthed
-                (updateEditNote
-                    (\note ->
-                        ( { note
-                            | editorBuffer = updatedText
-                          }
-                        , Cmd.none
+                (\authed ->
+                    updateEditNote
+                        (\note ->
+                            { note
+                                | editorBuffer = updatedText
+                            }
+                                |> Return.singleton
+                                |> returnEditNote authed
+                                |> returnAuthed model
                         )
-                    )
+                        authed
                 )
                 model
 
@@ -194,12 +202,13 @@ update msg model =
                 (\authed ->
                     case result of
                         Ok notes ->
-                            ( { authed | notes = notes }
-                            , Cmd.none
-                            )
+                            { authed | notes = notes }
+                                |> Return.singleton
+                                |> returnAuthed model
 
                         Err _ ->
-                            ( authed, Cmd.none )
+                            model
+                                |> Return.singleton
                 )
                 model
 
@@ -209,72 +218,76 @@ update msg model =
         LoadedNote { noteName, noteData } ->
             updateAuthed
                 (\authed ->
-                    ( { authed
-                        | state =
-                            EditNote
-                                { titleBuffer = noteName
-                                , editorBuffer = noteData
-                                , persistState = PersistedAs noteName
-                                }
-                      }
-                    , Cmd.none
-                    )
+                    { titleBuffer = noteName
+                    , editorBuffer = noteData
+                    , persistState = PersistedAs noteName
+                    }
+                        |> Return.singleton
+                        |> returnEditNote authed
+                        |> returnAuthed model
                 )
                 model
 
         CreateNewNote ->
             updateAuthed
                 (\authed ->
-                    ( { authed
-                        | state =
-                            EditNote
-                                { titleBuffer = ""
-                                , editorBuffer = ""
-                                , persistState = NotPersistedYet
-                                }
-                      }
-                    , Cmd.none
-                    )
+                    { titleBuffer = ""
+                    , editorBuffer = ""
+                    , persistState = NotPersistedYet
+                    }
+                        |> Return.singleton
+                        |> returnEditNote authed
+                        |> returnAuthed model
                 )
                 model
 
 
-updateAuthed : (Authenticated -> ( Authenticated, Cmd Msg )) -> Model -> ( Model, Cmd Msg )
+updateAuthed : (Authenticated -> Return Msg Model) -> Model -> Return Msg Model
 updateAuthed updater model =
     case model.state of
         Authed authed ->
-            let
-                ( newAuthed, cmds ) =
-                    updater authed
-            in
-            ( { model | state = Authed newAuthed }, cmds )
+            updater authed
 
         _ ->
-            ( model, Cmd.none )
+            Return.singleton model
 
 
-updateEditNote : (EditNoteState -> ( EditNoteState, Cmd Msg )) -> Authenticated -> ( Authenticated, Cmd Msg )
+returnAuthed : Model -> Return Msg Authenticated -> Return Msg Model
+returnAuthed model =
+    Return.map (\authed -> { model | state = Authed authed })
+
+
+updateEditNote : (EditNoteState -> Return Msg Model) -> Authenticated -> Return Msg Model
 updateEditNote updater authed =
     case authed.state of
         EditNote editNoteState ->
             let
-                ( newState, cmds ) =
+                ( newModel, cmds ) =
                     updater editNoteState
             in
-            ( { authed | state = EditNote newState }
+            ( newModel
             , cmds
             )
 
 
-handleUrlChange : Model -> ( Model, Cmd Msg )
+returnEditNote : Authenticated -> Return Msg EditNoteState -> Return Msg Authenticated
+returnEditNote authenticated =
+    Return.map (\editNoteState -> { authenticated | state = EditNote editNoteState })
+
+
+handleUrlChange : Model -> Return Msg Model
 handleUrlChange model =
     case Routes.parse model.url of
         Just (Routes.EditNote name) ->
-            ( model, Ports.loadNote name )
+            ( model
+            , Ports.loadNote name
+            )
 
         _ ->
             -- TODO: Implement a dashboard, go back to that
-            ( model, Cmd.none )
+            ( model
+            , Cmd.none
+            )
 
 
 subscriptions : Model -> Sub Msg
