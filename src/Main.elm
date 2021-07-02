@@ -243,7 +243,7 @@ updateEditNote updater authed =
 
 handleUrlChange : Model -> ( Model, Cmd Msg )
 handleUrlChange model =
-    case Debug.log "route" <| Routes.parse (Debug.log "url" model.url) of
+    case Routes.parse model.url of
         Just (Routes.EditNote name) ->
             ( model, Ports.loadNote name )
 
