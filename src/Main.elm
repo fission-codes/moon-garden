@@ -49,7 +49,13 @@ type AuthenticatedState
 type alias EditNoteState =
     { titleBuffer : String
     , editorBuffer : String
+    , persistState : PersistState
     }
+
+
+type PersistState
+    = PersistedAs String
+    | NotPersistedYet
 
 
 type Msg
@@ -63,6 +69,7 @@ type Msg
     | PersistNote { noteName : String, noteData : String }
     | LoadedNote { noteName : String, noteData : String }
     | LoadedNotes (Result String (Dict String WNFSEntry))
+    | CreateNewNote
 
 
 type LoadingMessage
@@ -142,6 +149,7 @@ update msg model =
                                 EditNote
                                     { titleBuffer = ""
                                     , editorBuffer = ""
+                                    , persistState = NotPersistedYet
                                     }
                             }
                 }
@@ -206,6 +214,23 @@ update msg model =
                             EditNote
                                 { titleBuffer = noteName
                                 , editorBuffer = noteData
+                                , persistState = PersistedAs noteName
+                                }
+                      }
+                    , Cmd.none
+                    )
+                )
+                model
+
+        CreateNewNote ->
+            updateAuthed
+                (\authed ->
+                    ( { authed
+                        | state =
+                            EditNote
+                                { titleBuffer = ""
+                                , editorBuffer = ""
+                                , persistState = NotPersistedYet
                                 }
                       }
                     , Cmd.none
@@ -310,7 +335,7 @@ viewAuthenticated model =
                 { navigation =
                     [ View.leafyButton
                         { label = "Create New Note"
-                        , onClick = LoadedNote { noteName = "", noteData = "" }
+                        , onClick = CreateNewNote
                         }
                     , View.searchInput
                         { styles = [ mt_8 ]
