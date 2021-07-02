@@ -247,22 +247,22 @@ randomLoadingMessage =
 view : Model -> Browser.Document Msg
 view model =
     { title = "🌛 Moon Garden 🌱"
-    , body = [ Html.toUnstyled <| body model ]
+    , body = [ Html.toUnstyled <| viewBody model ]
     }
 
 
-body : Model -> Html Msg
-body model =
+viewBody : Model -> Html Msg
+viewBody model =
     case model.state of
         Unauthed unauthedState ->
-            unauthenticated unauthedState
+            viewUnauthenticated unauthedState
 
         Authed authState ->
-            authenticated authState
+            viewAuthenticated authState
 
 
-authenticated : Authenticated -> Html Msg
-authenticated model =
+viewAuthenticated : Authenticated -> Html Msg
+viewAuthenticated model =
     case model.state of
         EditNote note ->
             View.appShellSidebar
@@ -315,8 +315,8 @@ authenticated model =
                 }
 
 
-unauthenticated : Unauthenticated -> Html Msg
-unauthenticated model =
+viewUnauthenticated : Unauthenticated -> Html Msg
+viewUnauthenticated model =
     case model of
         Loading (LoadingMessage message) ->
             View.loadingScreen { message = message, isError = False }
