@@ -218,7 +218,7 @@ titleText styles content =
             , text_bluegray_800
             , text_3xl
             , font_title
-            , sm [ text_5xl ]
+            , sm [ text_4_dot_5xl ]
             ]
         ]
         [ text content ]
@@ -404,6 +404,7 @@ leafyButton element =
         , css
             [ leafButtonStyle
             , py_3
+            , mb_1
             ]
         ]
         [ text element.label ]

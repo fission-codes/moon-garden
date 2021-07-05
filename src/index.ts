@@ -57,7 +57,13 @@ wn.initialise({
         })
     })
 
-    elmApp.ports.webnativeInit.send(state.authenticated)
+    if (state.authenticated) {
+        elmApp.ports.webnativeInit.send({
+            username: state.username,
+        })
+    } else {
+        elmApp.ports.webnativeInit.send(null)
+    }
 
 
     loadNotesLs()

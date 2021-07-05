@@ -31,6 +31,8 @@ routes =
     oneOf
         [ map (EditNote << Maybe.withDefault "" << Url.percentDecode)
             (top </> s "edit-note" </> string)
+        , map (EditNote "")
+            (top </> s "edit-note")
         , map Dashboard
             top
         ]

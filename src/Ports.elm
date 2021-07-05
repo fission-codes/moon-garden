@@ -3,7 +3,7 @@ port module Ports exposing (..)
 import Json.Decode as Json
 
 
-port webnativeInit : (Bool -> msg) -> Sub msg
+port webnativeInit : (Maybe { username : String } -> msg) -> Sub msg
 
 
 port redirectToLobby : () -> Cmd msg

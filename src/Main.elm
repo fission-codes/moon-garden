@@ -38,13 +38,15 @@ type Unauthenticated
 
 
 type alias Authenticated =
-    { notes : Dict String WNFSEntry
+    { username : String
+    , notes : Dict String WNFSEntry
     , state : AuthenticatedState
     }
 
 
 type AuthenticatedState
-    = EditNote EditNoteState
+    = Dashboard
+    | EditNote EditNoteState
 
 
 type alias EditNoteState =
@@ -65,7 +67,7 @@ type Msg
     | UrlChanged Url
     | UrlRequested Browser.UrlRequest
     | WebnativeSignIn
-    | WebnativeInit Bool
+    | WebnativeInit (Maybe { username : String })
     | UpdateTitleBuffer String
     | UpdateEditorBuffer String
     | LoadedNote { noteName : String, noteData : String }
@@ -141,25 +143,27 @@ update msg model =
                     , Navigation.pushUrl model.navKey (Url.toString url)
                     )
 
-        WebnativeInit isAuthed ->
-            if isAuthed then
-                { model
-                    | state =
-                        Authed
-                            { notes = Dict.empty
-                            , state =
-                                EditNote
-                                    { titleBuffer = ""
-                                    , editorBuffer = ""
-                                    , persistState = NotPersistedYet
-                                    }
-                            }
-                }
-                    |> handleUrlChange
+        WebnativeInit maybeAuthed ->
+            case maybeAuthed of
+                Just { username } ->
+                    { model
+                        | state =
+                            Authed
+                                { username = username
+                                , notes = Dict.empty
+                                , state =
+                                    EditNote
+                                        { titleBuffer = ""
+                                        , editorBuffer = ""
+                                        , persistState = NotPersistedYet
+                                        }
+                                }
+                    }
+                        |> handleUrlChange
 
-            else
-                { model | state = Unauthed PleaseSignIn }
-                    |> Return.singleton
+                _ ->
+                    { model | state = Unauthed PleaseSignIn }
+                        |> Return.singleton
 
         WebnativeSignIn ->
             ( model
@@ -167,42 +171,34 @@ update msg model =
             )
 
         UpdateTitleBuffer updatedTitle ->
-            updateAuthed
-                (\authed ->
-                    updateEditNote
-                        (\note ->
-                            { note
-                                | titleBuffer = updatedTitle
-                            }
-                                |> Return.singleton
-                                |> returnEditNote authed
-                                |> returnAuthed model
-                        )
-                        authed
+            updateEditNote
+                (\authed note ->
+                    { note
+                        | titleBuffer = updatedTitle
+                    }
+                        |> Return.singleton
+                        |> returnEditNote authed
+                        |> returnAuthed model
                 )
                 model
 
         UpdateEditorBuffer updatedText ->
-            updateAuthed
-                (\authed ->
-                    updateEditNote
-                        (\note ->
-                            { note
-                                | editorBuffer = updatedText
-                                , persistState = NotPersistedYet
-                            }
-                                |> Return.singleton
-                                |> Return.effect_
-                                    (\{ titleBuffer, editorBuffer } ->
-                                        Ports.persistNote
-                                            { noteName = titleBuffer
-                                            , noteData = editorBuffer
-                                            }
-                                    )
-                                |> returnEditNote authed
-                                |> returnAuthed model
-                        )
-                        authed
+            updateEditNote
+                (\authed note ->
+                    { note
+                        | editorBuffer = updatedText
+                        , persistState = NotPersistedYet
+                    }
+                        |> Return.singleton
+                        |> Return.effect_
+                            (\{ titleBuffer, editorBuffer } ->
+                                Ports.persistNote
+                                    { noteName = titleBuffer
+                                    , noteData = editorBuffer
+                                    }
+                            )
+                        |> returnEditNote authed
+                        |> returnAuthed model
                 )
                 model
 
@@ -235,21 +231,17 @@ update msg model =
                 model
 
         PersistedNote { noteName, noteData } ->
-            updateAuthed
-                (\authed ->
-                    updateEditNote
-                        (\note ->
-                            if note.titleBuffer == noteName && note.editorBuffer == noteData then
-                                { note | persistState = PersistedAs noteName }
-                                    |> Return.singleton
-                                    |> returnEditNote authed
-                                    |> returnAuthed model
+            updateEditNote
+                (\authed note ->
+                    if note.titleBuffer == noteName && note.editorBuffer == noteData then
+                        { note | persistState = PersistedAs noteName }
+                            |> Return.singleton
+                            |> returnEditNote authed
+                            |> returnAuthed model
 
-                            else
-                                model
-                                    |> Return.singleton
-                        )
-                        authed
+                    else
+                        model
+                            |> Return.singleton
                 )
                 model
 
@@ -261,9 +253,8 @@ update msg model =
                         , editorBuffer = ""
                         , persistState = NotPersistedYet
                         }
-                        -- TODO Change this to route to Routes.EditNote "" once the dashboard is implemeted
                         (Navigation.pushUrl model.navKey
-                            (Routes.toLink Routes.Dashboard)
+                            (Routes.toLink (Routes.EditNote ""))
                         )
                         |> returnEditNote authed
                         |> returnAuthed model
@@ -286,17 +277,24 @@ returnAuthed model =
     Return.map (\authed -> { model | state = Authed authed })
 
 
-updateEditNote : (EditNoteState -> Return Msg Model) -> Authenticated -> Return Msg Model
-updateEditNote updater authed =
-    case authed.state of
-        EditNote editNoteState ->
-            let
-                ( newModel, cmds ) =
-                    updater editNoteState
-            in
-            ( newModel
-            , cmds
-            )
+updateEditNote : (Authenticated -> EditNoteState -> Return Msg Model) -> Model -> Return Msg Model
+updateEditNote updater model =
+    updateAuthed
+        (\authed ->
+            case authed.state of
+                EditNote editNoteState ->
+                    let
+                        ( newModel, cmds ) =
+                            updater authed editNoteState
+                    in
+                    ( newModel
+                    , cmds
+                    )
+
+                _ ->
+                    model |> Return.singleton
+        )
+        model
 
 
 returnEditNote : Authenticated -> Return Msg EditNoteState -> Return Msg Authenticated
@@ -306,10 +304,10 @@ returnEditNote authenticated =
 
 handleUrlChange : Model -> Return Msg Model
 handleUrlChange model =
-    case Routes.parse model.url of
-        Just (Routes.EditNote name) ->
-            updateAuthed
-                (\authed ->
+    updateAuthed
+        (\authed ->
+            case Routes.parse model.url of
+                Just (Routes.EditNote name) ->
                     Return.return
                         { authed
                             | state =
@@ -321,14 +319,13 @@ handleUrlChange model =
                         }
                         (Ports.loadNote name)
                         |> returnAuthed model
-                )
-                model
 
-        _ ->
-            -- TODO: Implement a dashboard, go back to that
-            ( model
-            , Cmd.none
-            )
+                _ ->
+                    { authed | state = Dashboard }
+                        |> Return.singleton
+                        |> returnAuthed model
+        )
+        model
 
 
 subscriptions : Model -> Sub Msg
@@ -385,17 +382,55 @@ viewBody model =
 viewAuthenticated : Authenticated -> Html Msg
 viewAuthenticated model =
     case model.state of
+        Dashboard ->
+            View.appShellColumn
+                (if Dict.isEmpty model.notes then
+                    [ View.titleText [] ("Hello, " ++ model.username)
+                    , View.paragraph [ mt_6 ]
+                        [ Html.text "Welcome to your personal Moon Garden! This is your dashboard."
+                        , Html.br [] []
+                        , Html.br [] []
+                        , Html.text "It looks like your garden is empty right now. You can get started right away by creating a new note."
+                        , Html.br [] []
+                        , Html.text "If you come back here afterwards, you'll have a place to look at the seeds you've planted recently and a way to search through them."
+                        ]
+                    , View.leafyButton { onClick = CreateNewNote, label = "Create New Note" }
+                    ]
+
+                 else
+                    [ View.titleText [] ("Hello, " ++ model.username)
+                    , View.searchInput
+                        { placeholder = "Search Notes"
+                        , onInput = \_ -> NoOp
+                        , styles = [ mt_8 ]
+                        }
+                    , View.subtitleText [ mt_8 ] "Recent Notes"
+                    , model.notes
+                        |> Dict.values
+                        |> List.filterMap isMarkdownNote
+                        |> List.sortBy (.modificationTime >> (*) -1)
+                        |> List.take 12
+                        |> List.map viewRecentNote
+                        |> View.searchGrid
+                    ]
+                )
+
         EditNote note ->
             View.appShellSidebar
                 { navigation =
-                    [ View.leafyButton
+                    [ View.referencedNoteCard
+                        { label = "Dashboard"
+                        , link = Routes.toLink Routes.Dashboard
+                        , styles = [ mb_8, text_center ]
+                        }
+                    , View.leafyButton
                         { label = "Create New Note"
                         , onClick = CreateNewNote
                         }
                     , View.searchInput
-                        { styles = [ mt_8 ]
-                        , placeholder = "Type to Search"
+                        { placeholder = "Type to Search"
                         , onInput = \_ -> NoOp
+                        , styles = [ mt_8 ]
                         }
                     , model.notes
                         |> Dict.values

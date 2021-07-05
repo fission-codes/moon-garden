@@ -9,6 +9,9 @@ export default {
       mono: ['Courier Prime', 'monospace'],
     },
     extend: {
+      fontSize: {
+        '4.5xl': '2.5rem',
+      },
       colors: {
         bluegray: {
           '800': '#45465A',
