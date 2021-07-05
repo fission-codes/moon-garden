@@ -6,6 +6,7 @@ import Dict exposing (Dict)
 import Html.Styled as Html exposing (Html)
 import Json.Decode as D exposing (Decoder)
 import List.Extra as List
+import Maybe.Extra as Maybe
 import Ports
 import Random
 import Return exposing (Return)
@@ -28,7 +29,7 @@ type alias Model =
 
 type State
     = Unauthed Unauthenticated
-    | Authed Authenticated -- FIXME add more actions to Authenticated
+    | Authed Authenticated
 
 
 type Unauthenticated
@@ -45,14 +46,20 @@ type alias Authenticated =
 
 
 type AuthenticatedState
-    = Dashboard
+    = Dashboard DashboardState
     | EditNote EditNoteState
+
+
+type alias DashboardState =
+    { searchBuffer : String
+    }
 
 
 type alias EditNoteState =
     { titleBuffer : String
     , editorBuffer : String
     , persistState : PersistState
+    , searchBuffer : String
     }
 
 
@@ -65,7 +72,7 @@ type PersistState
 type Msg
     = NoOp -- FIXME Replace the need for this
     | UrlChanged Url
-    | UrlRequested Browser.UrlRequest
+    | LinkClicked Browser.UrlRequest
     | WebnativeSignIn
     | WebnativeInit (Maybe { username : String })
     | UpdateTitleBuffer String
@@ -74,6 +81,8 @@ type Msg
     | PersistedNote { noteName : String, noteData : String }
     | LoadedNotes (Result String (Dict String WNFSEntry))
     | CreateNewNote
+    | UpdateSearchBuffer String
+    | UpdateNavigationSearchBuffer String
 
 
 type LoadingMessage
@@ -97,7 +106,7 @@ main =
         , subscriptions = subscriptions
         , view = view
         , onUrlChange = UrlChanged
-        , onUrlRequest = UrlRequested
+        , onUrlRequest = LinkClicked
         }
 
 
@@ -131,7 +140,7 @@ update msg model =
             { model | url = url }
                 |> handleUrlChange
 
-        UrlRequested request ->
+        LinkClicked request ->
             case request of
                 Browser.External link ->
                     ( model
@@ -156,6 +165,7 @@ update msg model =
                                         { titleBuffer = ""
                                         , editorBuffer = ""
                                         , persistState = NotPersistedYet
+                                        , searchBuffer = ""
                                         }
                                 }
                     }
@@ -218,11 +228,12 @@ update msg model =
                 model
 
         LoadedNote { noteName, noteData } ->
-            updateAuthed
-                (\authed ->
-                    { titleBuffer = noteName
-                    , editorBuffer = noteData
-                    , persistState = PersistedAs noteName
+            updateEditNote
+                (\authed note ->
+                    { note
+                        | titleBuffer = noteName
+                        , editorBuffer = noteData
+                        , persistState = PersistedAs noteName
                     }
                         |> Return.singleton
                         |> returnEditNote authed
@@ -246,16 +257,37 @@ update msg model =
                 model
 
         CreateNewNote ->
-            updateAuthed
-                (\authed ->
+            updateEditNote
+                (\authed note ->
                     Return.return
-                        { titleBuffer = ""
-                        , editorBuffer = ""
-                        , persistState = NotPersistedYet
+                        { note
+                            | titleBuffer = ""
+                            , editorBuffer = ""
+                            , persistState = NotPersistedYet
                         }
                         (Navigation.pushUrl model.navKey
                             (Routes.toLink (Routes.EditNote ""))
                         )
+                        |> returnEditNote authed
+                        |> returnAuthed model
+                )
+                model
+
+        UpdateSearchBuffer updatedSearch ->
+            updateDashboard
+                (\authed dashboard ->
+                    { dashboard | searchBuffer = updatedSearch }
+                        |> Return.singleton
+                        |> returnDashboard authed
+                        |> returnAuthed model
+                )
+                model
+
+        UpdateNavigationSearchBuffer updatedSearch ->
+            updateEditNote
+                (\authed note ->
+                    { note | searchBuffer = updatedSearch }
+                        |> Return.singleton
                         |> returnEditNote authed
                         |> returnAuthed model
                 )
@@ -302,6 +334,31 @@ returnEditNote authenticated =
     Return.map (\editNoteState -> { authenticated | state = EditNote editNoteState })
 
 
+updateDashboard : (Authenticated -> DashboardState -> Return Msg Model) -> Model -> Return Msg Model
+updateDashboard updater model =
+    updateAuthed
+        (\authed ->
+            case authed.state of
+                Dashboard dashboard ->
+                    let
+                        ( newModel, cmds ) =
+                            updater authed dashboard
+                    in
+                    ( newModel
+                    , cmds
+                    )
+
+                _ ->
+                    model |> Return.singleton
+        )
+        model
+
+
+returnDashboard : Authenticated -> Return Msg DashboardState -> Return Msg Authenticated
+returnDashboard authenticated =
+    Return.map (\dashboard -> { authenticated | state = Dashboard dashboard })
+
+
 handleUrlChange : Model -> Return Msg Model
 handleUrlChange model =
     updateAuthed
@@ -312,16 +369,32 @@ handleUrlChange model =
                         { authed
                             | state =
                                 EditNote
-                                    { titleBuffer = name
-                                    , editorBuffer = ""
-                                    , persistState = LoadingNote
-                                    }
+                                    (case authed.state of
+                                        EditNote note ->
+                                            { note
+                                                | titleBuffer = name
+                                                , editorBuffer = ""
+                                                , persistState = LoadingNote
+                                            }
+
+                                        _ ->
+                                            { titleBuffer = name
+                                            , editorBuffer = ""
+                                            , persistState = LoadingNote
+                                            , searchBuffer = ""
+                                            }
+                                    )
                         }
                         (Ports.loadNote name)
                         |> returnAuthed model
 
                 _ ->
-                    { authed | state = Dashboard }
+                    { authed
+                        | state =
+                            Dashboard
+                                { searchBuffer = ""
+                                }
+                    }
                         |> Return.singleton
                         |> returnAuthed model
         )
@@ -382,7 +455,7 @@ viewBody model =
 viewAuthenticated : Authenticated -> Html Msg
 viewAuthenticated model =
     case model.state of
-        Dashboard ->
+        Dashboard dashboard ->
             View.appShellColumn
                 (if Dict.isEmpty model.notes then
                     [ View.titleText [] ("Hello, " ++ model.username)
@@ -398,21 +471,31 @@ viewAuthenticated model =
                     ]
 
                  else
-                    [ View.titleText [] ("Hello, " ++ model.username)
-                    , View.searchInput
-                        { placeholder = "Search Notes"
-                        , onInput = \_ -> NoOp
-                        , styles = [ mt_8 ]
-                        }
-                    , View.subtitleText [ mt_8 ] "Recent Notes"
-                    , model.notes
-                        |> Dict.values
-                        |> List.filterMap isMarkdownNote
-                        |> List.sortBy (.modificationTime >> (*) -1)
-                        |> List.take 12
-                        |> List.map viewRecentNote
-                        |> View.searchGrid
-                    ]
+                    List.concat
+                        [ [ View.titleText [] ("Hello, " ++ model.username)
+                          , View.searchInput
+                                { placeholder = "Search Notes"
+                                , onInput = UpdateSearchBuffer
+                                , styles = [ mt_8 ]
+                                }
+                          ]
+                        , if dashboard.searchBuffer == "" then
+                            [ View.subtitleText [ mt_8 ] "Recent Notes" ]
+
+                          else
+                            []
+                        , [ model.notes
+                                |> Dict.values
+                                |> List.filterMap
+                                    (isMarkdownNote
+                                        >> Maybe.andThen (isNotFiltered dashboard.searchBuffer)
+                                    )
+                                |> List.sortBy (.modificationTime >> (*) -1)
+                                |> List.take 24
+                                |> List.map viewRecentNote
+                                |> View.searchGrid
+                          ]
+                        ]
                 )
 
         EditNote note ->
@@ -429,12 +512,22 @@ viewAuthenticated model =
                         }
                     , View.searchInput
                         { placeholder = "Type to Search"
-                        , onInput = \_ -> NoOp
+                        , onInput = UpdateNavigationSearchBuffer
                         , styles = [ mt_8 ]
                         }
                     , model.notes
                         |> Dict.values
-                        |> List.filterMap isMarkdownNote
+                        |> List.filterMap
+                            (\wnfsEntry ->
+                                wnfsEntry
+                                    |> isMarkdownNote
+                                    |> (if note.searchBuffer == "" then
+                                            identity
+
+                                        else
+                                            Maybe.andThen (isNotFiltered note.searchBuffer)
+                                       )
+                            )
                         |> List.sortBy (.modificationTime >> (*) -1)
                         |> List.map viewRecentNote
                         |> View.searchResults
@@ -581,3 +674,35 @@ splitLast needle haystack =
                 , last
                 )
             )
+
+
+isNotFiltered : String -> MarkdownNoteRef -> Maybe MarkdownNoteRef
+isNotFiltered needle markdownNote =
+    let
+        haystack =
+            String.toLower markdownNote.name
+
+        lowerNeedle =
+            String.toLower needle
+
+        stripAfterLetter needleLetter maybeHaystackRest =
+            maybeHaystackRest
+                |> Maybe.andThen
+                    (\haystackRest ->
+                        case String.indices (String.fromChar needleLetter) haystackRest of
+                            [] ->
+                                Nothing
+
+                            index :: _ ->
+                                Just (String.dropLeft (index + 1) haystackRest)
+                    )
+    in
+    if
+        lowerNeedle
+            |> String.foldl stripAfterLetter (Just haystack)
+            |> Maybe.isJust
+    then
+        Just markdownNote
+
+    else
+        Nothing
