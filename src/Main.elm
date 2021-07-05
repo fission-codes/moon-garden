@@ -10,7 +10,7 @@ import Maybe.Extra as Maybe
 import Ports
 import Random
 import Return exposing (Return)
-import Routes exposing (Route)
+import Routes
 import Tailwind.Utilities exposing (..)
 import Url exposing (Url)
 import View
@@ -81,6 +81,7 @@ type Msg
     | PersistedNote { noteName : String, noteData : String }
     | LoadedNotes (Result String (Dict String WNFSEntry))
     | CreateNewNote
+    | DashboardCreateNewNote
     | UpdateSearchBuffer String
     | UpdateNavigationSearchBuffer String
 
@@ -264,6 +265,23 @@ update msg model =
                             | titleBuffer = ""
                             , editorBuffer = ""
                             , persistState = NotPersistedYet
+                        }
+                        (Navigation.pushUrl model.navKey
+                            (Routes.toLink (Routes.EditNote ""))
+                        )
+                        |> returnEditNote authed
+                        |> returnAuthed model
+                )
+                model
+
+        DashboardCreateNewNote ->
+            updateAuthed
+                (\authed ->
+                    Return.return
+                        { titleBuffer = ""
+                        , editorBuffer = ""
+                        , persistState = NotPersistedYet
+                        , searchBuffer = ""
                         }
                         (Navigation.pushUrl model.navKey
                             (Routes.toLink (Routes.EditNote ""))
@@ -467,7 +485,7 @@ viewAuthenticated model =
                         , Html.br [] []
                         , Html.text "If you come back here afterwards, you'll have a place to look at the seeds you've planted recently and a way to search through them."
                         ]
-                    , View.leafyButton { onClick = CreateNewNote, label = "Create New Note" }
+                    , View.leafyButton { onClick = DashboardCreateNewNote, label = "Create New Note" }
                     ]
 
                  else

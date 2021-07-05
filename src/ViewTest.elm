@@ -54,7 +54,7 @@ update msg model =
 
 
 view : Model -> Browser.Document Msg
-view model =
+view _ =
     { title = "🌛 Moon Garden 🌱"
     , body =
         [ Html.toUnstyled <|
@@ -124,7 +124,7 @@ viewEditor model =
 
 
 viewDashboard : Model -> Html Msg
-viewDashboard model =
+viewDashboard _ =
     View.appShellColumn
         [ View.titleText [] "Hello, matheus23"
         , View.paragraph [ mt_6 ]
