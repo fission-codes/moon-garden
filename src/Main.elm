@@ -530,6 +530,7 @@ viewAuthenticated model =
                  else
                     List.concat
                         [ [ View.titleText [] ("Hello, " ++ model.username)
+                          , View.leafyButton { onClick = DashboardCreateNewNote, label = "Create New Note" }
                           , View.searchInput
                                 { placeholder = "Search Notes"
                                 , onInput = UpdateSearchBuffer
