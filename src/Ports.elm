@@ -15,6 +15,9 @@ port persistNote : { noteName : String, noteData : String } -> Cmd msg
 port persistedNote : ({ noteName : String, noteData : String } -> msg) -> Sub msg
 
 
+port renameNote : { noteNameBefore : String, noteNameNow : String, noteData : String } -> Cmd msg
+
+
 port loadNote : String -> Cmd msg
 
 

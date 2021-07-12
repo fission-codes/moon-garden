@@ -46,6 +46,23 @@ wn.initialise({
         await loadNotesLs()
     }, 1500))
 
+    elmApp.ports.renameNote.subscribe(debounce(async ({ noteNameBefore, noteNameNow, noteData }: { noteNameBefore: string, noteNameNow: string, noteData: string }) => {
+        if (!state.authenticated) return
+
+        console.log("renaming", noteNameBefore, noteNameNow)
+
+        const pathBefore = wn.path.file("public", "Documents", "Notes", `${noteNameBefore}.md`)
+        const pathNow = wn.path.file("public", "Documents", "Notes", `${noteNameNow}.md`)
+    
+        await state.fs.mv(pathBefore, pathNow)
+        await state.fs.write(pathNow, noteData)
+        await state.fs.publish()
+
+        elmApp.ports.persistedNote.send({ noteName: noteNameNow, noteData })
+
+        await loadNotesLs()
+    }, 1500))
+
     elmApp.ports.loadNote.subscribe(async (noteName: string) => {
         console.log("loadNote", state.authenticated, noteName)
         if (!state.authenticated) return

@@ -65,6 +65,7 @@ type alias EditNoteState =
 
 type PersistState
     = PersistedAs String
+    | PersistingAs String
     | NotPersistedYet
     | LoadingNote
 
@@ -188,6 +189,7 @@ update msg model =
                         | titleBuffer = updatedTitle
                     }
                         |> Return.singleton
+                        |> Return.effect_ (noteUpdateEffects note)
                         |> returnEditNote authed
                         |> returnAuthed model
                 )
@@ -198,16 +200,10 @@ update msg model =
                 (\authed note ->
                     { note
                         | editorBuffer = updatedText
-                        , persistState = NotPersistedYet
+                        , persistState = PersistingAs note.titleBuffer
                     }
                         |> Return.singleton
-                        |> Return.effect_
-                            (\{ titleBuffer, editorBuffer } ->
-                                Ports.persistNote
-                                    { noteName = titleBuffer
-                                    , noteData = editorBuffer
-                                    }
-                            )
+                        |> Return.effect_ (noteUpdateEffects note)
                         |> returnEditNote authed
                         |> returnAuthed model
                 )
@@ -417,6 +413,49 @@ handleUrlChange model =
                         |> returnAuthed model
         )
         model
+
+
+noteUpdateEffects : EditNoteState -> EditNoteState -> Cmd Msg
+noteUpdateEffects noteBefore noteNow =
+    case noteBefore.persistState of
+        LoadingNote ->
+            -- If it's still loading, we don't want to override
+            -- the note with almost-empty text (!)
+            Cmd.none
+
+        NotPersistedYet ->
+            Ports.persistNote
+                { noteName = noteNow.titleBuffer
+                , noteData = noteNow.editorBuffer
+                }
+
+        PersistedAs titleBefore ->
+            if titleBefore == noteNow.titleBuffer then
+                Ports.persistNote
+                    { noteName = noteNow.titleBuffer
+                    , noteData = noteNow.editorBuffer
+                    }
+
+            else
+                Ports.renameNote
+                    { noteNameBefore = titleBefore
+                    , noteNameNow = noteNow.titleBuffer
+                    , noteData = noteNow.editorBuffer
+                    }
+
+        PersistingAs titleBefore ->
+            if titleBefore == noteNow.titleBuffer then
+                Ports.persistNote
+                    { noteName = noteNow.titleBuffer
+                    , noteData = noteNow.editorBuffer
+                    }
+
+            else
+                Ports.renameNote
+                    { noteNameBefore = titleBefore
+                    , noteNameNow = noteNow.titleBuffer
+                    , noteData = noteNow.editorBuffer
+                    }
 
 
 subscriptions : Model -> Sub Msg
