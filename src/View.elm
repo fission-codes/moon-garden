@@ -220,6 +220,7 @@ titleText styles content =
             , text_bluegray_800
             , text_3xl
             , font_title
+            , whitespace_pre_wrap
             , sm [ text_4_dot_5xl ]
             ]
         ]
