@@ -73,7 +73,7 @@ type PersistState
 type Msg
     = NoOp -- FIXME Replace the need for this
     | UrlChanged Url
-    | LinkClicked Browser.UrlRequest
+    | LinkClicked (Routes.UrlRequest Routes.EditorRoute)
     | WebnativeSignIn
     | WebnativeInit (Maybe { username : String })
     | UpdateTitleBuffer String
@@ -108,7 +108,7 @@ main =
         , subscriptions = subscriptions
         , view = view
         , onUrlChange = UrlChanged
-        , onUrlRequest = LinkClicked
+        , onUrlRequest = Routes.fromRequestInEditor >> LinkClicked
         }
 
 
@@ -144,12 +144,12 @@ update msg model =
 
         LinkClicked request ->
             case request of
-                Browser.External link ->
+                Routes.External link ->
                     ( model
                     , Navigation.load link
                     )
 
-                Browser.Internal url ->
+                Routes.Internal url _ ->
                     ( { model | url = url }
                     , Navigation.pushUrl model.navKey (Url.toString url)
                     )
@@ -263,7 +263,7 @@ update msg model =
                             , persistState = NotPersistedYet
                         }
                         (Navigation.pushUrl model.navKey
-                            (Routes.toLink (Routes.Editor (Routes.EditNote "")))
+                            (Routes.toLink (Routes.Editor (Routes.EditorEditNote "")))
                         )
                         |> returnEditNote authed
                         |> returnAuthed model
@@ -280,7 +280,7 @@ update msg model =
                         , searchBuffer = ""
                         }
                         (Navigation.pushUrl model.navKey
-                            (Routes.toLink (Routes.Editor (Routes.EditNote "")))
+                            (Routes.toLink (Routes.Editor (Routes.EditorEditNote "")))
                         )
                         |> returnEditNote authed
                         |> returnAuthed model
@@ -378,7 +378,7 @@ handleUrlChange model =
     updateAuthed
         (\authed ->
             case Routes.fromUrl model.url of
-                Routes.Editor (Routes.EditNote name) ->
+                Routes.Editor (Routes.EditorEditNote name) ->
                     Return.return
                         { authed
                             | state =
@@ -402,7 +402,7 @@ handleUrlChange model =
                         (Ports.loadNote name)
                         |> returnAuthed model
 
-                Routes.Editor Routes.Dashboard ->
+                Routes.Editor Routes.EditorDashboard ->
                     { authed
                         | state =
                             Dashboard
@@ -411,6 +411,19 @@ handleUrlChange model =
                     }
                         |> Return.singleton
                         |> returnAuthed model
+
+                Routes.Viewer viewerRoute ->
+                    model
+                        |> Return.singleton
+                        |> Return.effect_
+                            (\_ ->
+                                Cmd.batch
+                                    -- If someone types /viewer in the url, this will change it to /viewer/ and load the correct route
+                                    -- without adding another history entry. This prevents a reload-loop when trying to go back in history once
+                                    [ Navigation.replaceUrl model.navKey (Routes.toLink (Routes.Viewer viewerRoute))
+                                    , Navigation.reload
+                                    ]
+                            )
         )
         model
 
@@ -561,7 +574,7 @@ viewAuthenticated model =
                 { navigation =
                     [ View.referencedNoteCard
                         { label = "Dashboard"
-                        , link = Routes.toLink (Routes.Editor Routes.Dashboard)
+                        , link = Routes.toLink (Routes.Editor Routes.EditorDashboard)
                         , styles = [ mb_8, text_center ]
                         }
                     , View.leafyButton
@@ -632,7 +645,7 @@ viewRecentNote : MarkdownNoteRef -> Html Msg
 viewRecentNote note =
     View.referencedNoteCard
         { label = note.name
-        , link = Routes.toLink (Routes.Editor (Routes.EditNote note.name))
+        , link = Routes.toLink (Routes.Editor (Routes.EditorEditNote note.name))
         , styles = []
         }
 

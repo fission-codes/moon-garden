@@ -3,6 +3,7 @@ module Viewer exposing (..)
 import Browser
 import Browser.Navigation as Navigation
 import Html.Styled as Html exposing (Html)
+import Return exposing (Return)
 import Routes
 import Tailwind.Utilities exposing (..)
 import Url exposing (Url)
@@ -11,7 +12,7 @@ import View
 
 type Msg
     = UrlChanged Url
-    | LinkClicked Browser.UrlRequest
+    | LinkClicked (Routes.UrlRequest Routes.ViewerRoute)
     | UsernameChanged String
     | UsernameSubmitted
 
@@ -34,7 +35,7 @@ main =
         , subscriptions = subscriptions
         , view = view
         , onUrlChange = UrlChanged
-        , onUrlRequest = LinkClicked
+        , onUrlRequest = Routes.fromRequestInViewer >> LinkClicked
         }
 
 
@@ -51,24 +52,44 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         UrlChanged url ->
-            ( { model | url = url }
-            , Cmd.none
-            )
+            { model | url = url }
+                |> handleUrlChange
 
         LinkClicked request ->
             case request of
-                Browser.External link ->
+                Routes.External link ->
                     ( model
                     , Navigation.load link
                     )
 
-                Browser.Internal url ->
+                Routes.Internal url _ ->
                     ( { model | url = url }
                     , Navigation.pushUrl model.navKey (Url.toString url)
                     )
 
         _ ->
             ( model, Cmd.none )
+
+
+handleUrlChange : Model -> Return Msg Model
+handleUrlChange model =
+    case Routes.fromUrl model.url of
+        Routes.Viewer _ ->
+            model
+                |> Return.singleton
+
+        Routes.Editor editorRoute ->
+            model
+                |> Return.singleton
+                |> Return.effect_
+                    (\_ ->
+                        Cmd.batch
+                            -- This will load the correct route without adding another history entry.
+                            -- This prevents a reload-loop when trying to go back in history once.
+                            [ Navigation.replaceUrl model.navKey (Routes.toLink (Routes.Editor editorRoute))
+                            , Navigation.reload
+                            ]
+                    )
 
 
 subscriptions : Model -> Sub Msg
@@ -139,7 +160,7 @@ viewBody _ =
         , View.paragraph []
             [ Html.text "Think this is cool? You can totally "
             , View.link
-                { location = Routes.toLink (Routes.Editor Routes.Dashboard)
+                { location = Routes.toLink (Routes.Editor Routes.EditorDashboard)
                 , label = [ Html.text "build your own moon garden" ]
                 }
             , Html.text " with fission."
