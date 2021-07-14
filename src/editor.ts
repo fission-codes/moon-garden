@@ -1,9 +1,9 @@
 // @ts-ignore
-import { Elm } from './Main.elm'
+import { Elm } from './Editor.elm'
 import * as wn from 'webnative'
 import debounce from 'lodash/debounce'
 
-const elmApp = Elm.Main.init({
+const elmApp = Elm.Editor.init({
     flags: {
         randomness: crypto.getRandomValues(new Int32Array(1))[0]
     }

@@ -1,4 +1,4 @@
-module Main exposing (main)
+module Editor exposing (main)
 
 import Browser
 import Browser.Navigation as Navigation
