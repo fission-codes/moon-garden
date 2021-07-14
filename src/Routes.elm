@@ -6,28 +6,51 @@ import Url.Parser exposing (..)
 
 
 type Route
+    = Editor EditorRoute
+
+
+type EditorRoute
     = Dashboard
     | EditNote String
 
 
-fromFragment : Url -> Url
-fromFragment url =
-    { protocol = url.protocol
-    , host = url.host
-    , port_ = url.port_
-    , path = url.fragment |> Maybe.withDefault ""
-    , query = url.query
+fromFragment : Maybe String -> Url
+fromFragment fragment =
+    { protocol = Url.Https
+    , host = ""
+    , port_ = Nothing
+    , path = fragment |> Maybe.withDefault "/"
+    , query = Nothing
     , fragment = Nothing
     }
 
 
-parse : Url -> Maybe Route
-parse url =
-    Url.Parser.parse routes (fromFragment url)
+fragmentRoute : Parser (fragment -> fragment) fragment -> Parser (Maybe fragment -> a) a
+fragmentRoute fragmentParser =
+    fragment
+        (\frag ->
+            frag
+                |> fromFragment
+                |> parse fragmentParser
+        )
+
+
+fromUrl : Url -> Route
+fromUrl url =
+    parse routes url
+        |> Maybe.withDefault (Editor Dashboard)
 
 
 routes : Parser (Route -> Route) Route
 routes =
+    oneOf
+        [ map (Maybe.withDefault Dashboard >> Editor)
+            (top </> fragmentRoute editorFragmentRoutes)
+        ]
+
+
+editorFragmentRoutes : Parser (EditorRoute -> EditorRoute) EditorRoute
+editorFragmentRoutes =
     oneOf
         [ map (EditNote << Maybe.withDefault "" << Url.percentDecode)
             (top </> s "edit-note" </> string)
@@ -41,8 +64,8 @@ routes =
 toLink : Route -> String
 toLink route =
     case route of
-        Dashboard ->
-            "#/"
+        Editor Dashboard ->
+            "/#/"
 
-        EditNote name ->
-            "#/edit-note/" ++ Url.percentEncode name
+        Editor (EditNote name) ->
+            "/#/edit-note/" ++ Url.percentEncode name

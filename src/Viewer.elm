@@ -3,7 +3,7 @@ module Viewer exposing (..)
 import Browser
 import Browser.Navigation as Navigation
 import Html.Styled as Html exposing (Html)
-import Html.Styled.Attributes exposing (css)
+import Routes
 import Tailwind.Utilities exposing (..)
 import Url exposing (Url)
 import View
@@ -12,10 +12,14 @@ import View
 type Msg
     = UrlChanged Url
     | LinkClicked Browser.UrlRequest
+    | UsernameChanged String
+    | UsernameSubmitted
 
 
 type alias Model =
-    {}
+    { url : Url
+    , navKey : Navigation.Key
+    }
 
 
 type alias Flags =
@@ -35,13 +39,36 @@ main =
 
 
 init : Flags -> Url -> Navigation.Key -> ( Model, Cmd Msg )
-init _ _ _ =
-    ( {}, Cmd.none )
+init _ url navKey =
+    ( { url = url
+      , navKey = navKey
+      }
+    , Cmd.none
+    )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update _ model =
-    ( model, Cmd.none )
+update msg model =
+    case msg of
+        UrlChanged url ->
+            ( { model | url = url }
+            , Cmd.none
+            )
+
+        LinkClicked request ->
+            case request of
+                Browser.External link ->
+                    ( model
+                    , Navigation.load link
+                    )
+
+                Browser.Internal url ->
+                    ( { model | url = url }
+                    , Navigation.pushUrl model.navKey (Url.toString url)
+                    )
+
+        _ ->
+            ( model, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -97,12 +124,24 @@ So either, we have to implement our algorithms given some changes, or we have to
 
 viewBody : Model -> Html Msg
 viewBody _ =
-    View.appShellSidebar
-        { navigation = []
-        , main =
-            [ View.renderedDocument
-                { title = "13th July 2021"
-                , markdownContent = post
-                }
+    View.appShellColumn
+        [ View.titleText [] "Moon Garden"
+        , View.paragraph []
+            [ Html.text "is a digital garden app built on the Fission Platform."
+            , Html.br [] []
+            , Html.br [] []
+            , Html.text "Check out the a digital garden by entering a fission username:"
             ]
-        }
+        , View.usernameForm
+            { onSubmit = UsernameSubmitted
+            , onChangeUsername = UsernameChanged
+            }
+        , View.paragraph []
+            [ Html.text "Think this is cool? You can totally "
+            , View.link
+                { location = Routes.toLink (Routes.Editor Routes.Dashboard)
+                , label = [ Html.text "build your own moon garden" ]
+                }
+            , Html.text " with fission."
+            ]
+        ]

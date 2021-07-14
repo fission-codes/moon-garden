@@ -77,7 +77,8 @@ viewEditor model =
             List.concat
                 [ [ View.leafyButton
                         { label = "Create New Note"
-                        , onClick = NoOp
+                        , onClick = Just NoOp
+                        , styles = []
                         }
                   , View.searchInput
                         { styles = [ mt_8 ]
@@ -162,5 +163,5 @@ viewDashboardEmpty =
             , Html.br [] []
             , Html.text "If you come back here afterwards, you'll have a place to look at the seeds you've planted recently and a way to search through them."
             ]
-        , View.leafyButton { onClick = NoOp, label = "Create New Note" }
+        , View.leafyButton { onClick = Just NoOp, label = "Create New Note", styles = [] }
         ]

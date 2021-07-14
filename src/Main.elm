@@ -263,7 +263,7 @@ update msg model =
                             , persistState = NotPersistedYet
                         }
                         (Navigation.pushUrl model.navKey
-                            (Routes.toLink (Routes.EditNote ""))
+                            (Routes.toLink (Routes.Editor (Routes.EditNote "")))
                         )
                         |> returnEditNote authed
                         |> returnAuthed model
@@ -280,7 +280,7 @@ update msg model =
                         , searchBuffer = ""
                         }
                         (Navigation.pushUrl model.navKey
-                            (Routes.toLink (Routes.EditNote ""))
+                            (Routes.toLink (Routes.Editor (Routes.EditNote "")))
                         )
                         |> returnEditNote authed
                         |> returnAuthed model
@@ -377,8 +377,8 @@ handleUrlChange : Model -> Return Msg Model
 handleUrlChange model =
     updateAuthed
         (\authed ->
-            case Routes.parse model.url of
-                Just (Routes.EditNote name) ->
+            case Routes.fromUrl model.url of
+                Routes.Editor (Routes.EditNote name) ->
                     Return.return
                         { authed
                             | state =
@@ -402,7 +402,7 @@ handleUrlChange model =
                         (Ports.loadNote name)
                         |> returnAuthed model
 
-                _ ->
+                Routes.Editor Routes.Dashboard ->
                     { authed
                         | state =
                             Dashboard
@@ -524,13 +524,13 @@ viewAuthenticated model =
                         , Html.br [] []
                         , Html.text "If you come back here afterwards, you'll have a place to look at the seeds you've planted recently and a way to search through them."
                         ]
-                    , View.leafyButton { onClick = DashboardCreateNewNote, label = "Create New Note" }
+                    , View.leafyButton { onClick = Just DashboardCreateNewNote, label = "Create New Note", styles = [] }
                     ]
 
                  else
                     List.concat
                         [ [ View.titleText [] ("Hello, " ++ model.username)
-                          , View.leafyButton { onClick = DashboardCreateNewNote, label = "Create New Note" }
+                          , View.leafyButton { onClick = Just DashboardCreateNewNote, label = "Create New Note", styles = [] }
                           , View.searchInput
                                 { placeholder = "Search Notes"
                                 , onInput = UpdateSearchBuffer
@@ -561,12 +561,13 @@ viewAuthenticated model =
                 { navigation =
                     [ View.referencedNoteCard
                         { label = "Dashboard"
-                        , link = Routes.toLink Routes.Dashboard
+                        , link = Routes.toLink (Routes.Editor Routes.Dashboard)
                         , styles = [ mb_8, text_center ]
                         }
                     , View.leafyButton
                         { label = "Create New Note"
-                        , onClick = CreateNewNote
+                        , onClick = Just CreateNewNote
+                        , styles = []
                         }
                     , View.searchInput
                         { placeholder = "Type to Search"
@@ -631,7 +632,7 @@ viewRecentNote : MarkdownNoteRef -> Html Msg
 viewRecentNote note =
     View.referencedNoteCard
         { label = note.name
-        , link = Routes.toLink (Routes.EditNote note.name)
+        , link = Routes.toLink (Routes.Editor (Routes.EditNote note.name))
         , styles = []
         }
 

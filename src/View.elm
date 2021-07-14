@@ -389,24 +389,29 @@ leafButtonStyle =
 
         -- button press animation
         , transform_gpu
-        , translate_y_0
+        , neg_translate_y_1
         , Css.property "transition-property" "transform box-shadow"
         , duration_100
         , Css.active
-            [ translate_y_1
+            [ translate_y_0
             , Css.property "box-shadow" "0 0 0 0 #95A25C"
             ]
         ]
 
 
-leafyButton : { label : String, onClick : msg } -> Html msg
+leafyButton : { label : String, onClick : Maybe msg, styles : List Css.Style } -> Html msg
 leafyButton element =
     button
-        [ Events.onClick element.onClick
+        [ case element.onClick of
+            Just msg ->
+                Events.onClick msg
+
+            Nothing ->
+                type_ "submit"
         , css
-            [ leafButtonStyle
+            [ Css.batch element.styles
+            , leafButtonStyle
             , py_3
-            , mb_1
             ]
         ]
         [ text element.label ]
@@ -619,3 +624,37 @@ renderedDocument doc =
             doc.markdownContent
             |> fromUnstyled
         ]
+
+
+usernameForm : { onSubmit : msg, onChangeUsername : String -> msg } -> Html msg
+usernameForm element =
+    form
+        [ Events.onSubmit element.onSubmit
+        , css
+            [ flex
+            , flex_row
+            ]
+        ]
+        [ searchInput
+            { onInput = element.onChangeUsername
+            , styles = [ flex_grow, flex_shrink ]
+            , placeholder = "e.g. boris, expede, or matheus23"
+            }
+        , leafyButton
+            { onClick = Nothing
+            , label = "Explore"
+            , styles = [ ml_2, px_6, flex_shrink_0 ]
+            }
+        ]
+
+
+link : { label : List (Html msg), location : String } -> Html msg
+link element =
+    a
+        [ href element.location
+        , css
+            [ text_bluegray_600
+            , Css.hover [ underline ]
+            ]
+        ]
+        element.label
