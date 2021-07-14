@@ -3,9 +3,11 @@ module View exposing (..)
 import Css
 import Css.Media
 import FeatherIcons
+import Html.Attributes
 import Html.Styled as Html exposing (..)
 import Html.Styled.Attributes exposing (css, href, id, placeholder, type_, value)
 import Html.Styled.Events as Events
+import Markdown
 import Tailwind.Breakpoints exposing (..)
 import Tailwind.Utilities exposing (..)
 
@@ -600,4 +602,20 @@ wikilinkNew element =
                     , ml_1
                     ]
                 ]
+        ]
+
+
+renderedDocument : { title : String, markdownContent : String } -> Html msg
+renderedDocument doc =
+    article
+        [ css
+            [ prose
+            ]
+        ]
+        [ h1 []
+            [ text doc.title ]
+        , Markdown.toHtml
+            [ Html.Attributes.style "display" "contents" ]
+            doc.markdownContent
+            |> fromUnstyled
         ]

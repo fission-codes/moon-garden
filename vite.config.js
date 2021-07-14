@@ -12,7 +12,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(currentDir, 'index.html'),
-        view_test: resolve(currentDir, 'view_test.html')
+        view_test: resolve(currentDir, 'view_test.html'),
+        viewer: resolve(currentDir, 'viewer/index.html'),
       }
     }
   }

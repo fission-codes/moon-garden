@@ -8,11 +8,12 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "start": "yarn gen:css && vite",
+    "start": "yarn gen:css && vite --host",
     "build": "yarn gen:css && vite build --outDir build",
     "gen:css": "mkdir -p gen && node tailwind-modules.js"
   },
   "devDependencies": {
+    "@tailwindcss/typography": "^0.4.1",
     "autoprefixer": "^10.2.6",
     "elm": "^0.19.1-5",
     "elm-tailwind-modules": "^0.3.2",
