@@ -20,6 +20,16 @@ type Msg
 type alias Model =
     { url : Url
     , navKey : Navigation.Key
+    , state : State
+    }
+
+
+type State
+    = Dashboard DashboardState
+
+
+type alias DashboardState =
+    { usernameBuffer : String
     }
 
 
@@ -43,6 +53,10 @@ init : Flags -> Url -> Navigation.Key -> ( Model, Cmd Msg )
 init _ url navKey =
     ( { url = url
       , navKey = navKey
+      , state =
+            Dashboard
+                { usernameBuffer = ""
+                }
       }
     , Cmd.none
     )
@@ -67,8 +81,27 @@ update msg model =
                     , Navigation.pushUrl model.navKey (Url.toString url)
                     )
 
-        _ ->
-            ( model, Cmd.none )
+        UsernameChanged username ->
+            case model.state of
+                Dashboard state ->
+                    { state | usernameBuffer = username }
+                        |> (\newState -> { model | state = Dashboard newState })
+                        |> Return.singleton
+
+        UsernameSubmitted ->
+            case model.state of
+                Dashboard state ->
+                    model
+                        |> Return.singleton
+                        |> Return.effect_
+                            (\_ ->
+                                Navigation.pushUrl model.navKey
+                                    (Routes.toLink
+                                        (Routes.Viewer
+                                            (Routes.ViewerGarden state.usernameBuffer)
+                                        )
+                                    )
+                            )
 
 
 handleUrlChange : Model -> Return Msg Model
