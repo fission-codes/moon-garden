@@ -204,31 +204,40 @@ handleUrlChange model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    case model.state of
-        InGarden _ ->
-            Ports.loadedNotesFor
-                (Common.withDecoding
-                    (D.map2 (\username notes -> { username = username, notes = notes })
-                        (D.field "username" D.string)
-                        (D.field "notes" (D.dict Common.decodeWNFSEntry))
-                    )
-                    LoadedNotesFor
-                )
-
-        _ ->
-            Ports.loadedNote
-                (Common.withDecoding
-                    (D.map2 (\username note -> { username = username, note = note })
-                        (D.field "username" D.string)
-                        (D.field "note"
-                            (D.map2 (\noteName noteData -> { noteName = noteName, noteData = noteData })
-                                (D.field "noteName" D.string)
-                                (D.field "noteData" D.string)
+    let
+        common =
+            Sub.batch
+                [ Ports.loadedNote
+                    (Common.withDecoding
+                        (D.map2 (\username note -> { username = username, note = note })
+                            (D.field "username" D.string)
+                            (D.field "note"
+                                (D.map2 (\noteName noteData -> { noteName = noteName, noteData = noteData })
+                                    (D.field "noteName" D.string)
+                                    (D.field "noteData" D.string)
+                                )
                             )
                         )
+                        LoadedNote
                     )
-                    LoadedNote
-                )
+                ]
+    in
+    case model.state of
+        InGarden _ ->
+            Sub.batch
+                [ Ports.loadedNotesFor
+                    (Common.withDecoding
+                        (D.map2 (\username notes -> { username = username, notes = notes })
+                            (D.field "username" D.string)
+                            (D.field "notes" (D.dict Common.decodeWNFSEntry))
+                        )
+                        LoadedNotesFor
+                    )
+                , common
+                ]
+
+        _ ->
+            common
 
 
 view : Model -> Browser.Document Msg
