@@ -129,6 +129,10 @@ appShellSidebar element =
             , overflow_x_auto
             , overflow_y_auto
             , Css.property "scroll-snap-type" "x mandatory"
+
+            -- Only in firefox
+            , Css.Media.withMediaQuery [ "screen and (min--moz-device-pixel-ratio:0)" ]
+                [ Css.property "scroll-snap-type" "none" ]
             ]
         ]
         [ nav
