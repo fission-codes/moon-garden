@@ -31,6 +31,7 @@ type EditorRoute
 type ViewerRoute
     = ViewerDashboard
     | ViewerGarden String
+    | ViewerGardenNote String String
 
 
 type UrlRequest route
@@ -100,10 +101,21 @@ editorFragmentRoutes =
 viewerFragmentRoutes : Parser (ViewerRoute -> ViewerRoute) ViewerRoute
 viewerFragmentRoutes =
     oneOf
-        [ map (Url.percentDecode >> Maybe.map ViewerGarden)
-            (top </> s "garden" </> string)
-        , map (Just ViewerDashboard)
-            top
+        [ (top </> s "garden" </> string </> s "note" </> string)
+            |> map
+                (\username noteName ->
+                    Maybe.map2 ViewerGardenNote
+                        (Url.percentDecode username)
+                        (Url.percentDecode noteName)
+                )
+        , (top </> s "garden" </> string)
+            |> map
+                (\username ->
+                    Maybe.map ViewerGarden
+                        (Url.percentDecode username)
+                )
+        , top
+            |> map (Just ViewerDashboard)
         ]
         |> map (Maybe.withDefault ViewerDashboard)
 
@@ -122,6 +134,12 @@ toLink route =
 
         Viewer (ViewerGarden username) ->
             "/viewer/#/garden/" ++ Url.percentEncode username
+
+        Viewer (ViewerGardenNote username noteName) ->
+            "/viewer/#/garden/"
+                ++ Url.percentEncode username
+                ++ "/note/"
+                ++ Url.percentEncode noteName
 
 
 

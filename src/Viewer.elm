@@ -21,6 +21,7 @@ type Msg
     | UsernameChanged String
     | UsernameSubmitted
     | LoadedNotesFor (Result String { username : String, notes : Dict String WNFSEntry })
+    | LoadedNote (Result String { username : String, note : { noteName : String, noteData : String } })
 
 
 type alias Model =
@@ -33,6 +34,7 @@ type alias Model =
 type State
     = Dashboard DashboardState
     | InGarden InGardenState
+    | InGardenNote InGardenNoteState
 
 
 type alias DashboardState =
@@ -43,6 +45,12 @@ type alias DashboardState =
 type alias InGardenState =
     { username : String
     , notes : RemoteData String (Dict String WNFSEntry)
+    }
+
+
+type alias InGardenNoteState =
+    { username : String
+    , note : RemoteData String { noteName : String, noteData : String }
     }
 
 
@@ -135,6 +143,21 @@ update msg model =
                 _ ->
                     model |> Return.singleton
 
+        LoadedNote result ->
+            case result of
+                Ok { username, note } ->
+                    { model
+                        | state =
+                            InGardenNote
+                                { username = username
+                                , note = RemoteData.Success note
+                                }
+                    }
+                        |> Return.singleton
+
+                Err _ ->
+                    model |> Return.singleton
+
 
 handleUrlChange : Model -> Return Msg Model
 handleUrlChange model =
@@ -155,6 +178,14 @@ handleUrlChange model =
                 |> Return.effect_
                     (\_ ->
                         Ports.loadNotesFor { username = username }
+                    )
+
+        Routes.Viewer (Routes.ViewerGardenNote username noteName) ->
+            model
+                |> Return.singleton
+                |> Return.effect_
+                    (\_ ->
+                        Ports.loadNote { username = username, noteName = noteName }
                     )
 
         Routes.Editor editorRoute ->
@@ -185,7 +216,19 @@ subscriptions model =
                 )
 
         _ ->
-            Sub.none
+            Ports.loadedNote
+                (Common.withDecoding
+                    (D.map2 (\username note -> { username = username, note = note })
+                        (D.field "username" D.string)
+                        (D.field "note"
+                            (D.map2 (\noteName noteData -> { noteName = noteName, noteData = noteData })
+                                (D.field "noteName" D.string)
+                                (D.field "noteData" D.string)
+                            )
+                        )
+                    )
+                    LoadedNote
+                )
 
 
 view : Model -> Browser.Document Msg
@@ -233,7 +276,7 @@ viewBody model =
                                 |> List.filterMap Common.isMarkdownNote
                                 |> List.sortBy (.modificationTime >> (*) -1)
                                 |> List.take 24
-                                |> List.map viewRecentNote
+                                |> List.map (viewRecentNote garden.username)
                                 |> View.searchGrid
                             ]
 
@@ -242,11 +285,31 @@ viewBody model =
                     ]
                 )
 
+        InGardenNote gardenNote ->
+            case gardenNote.note of
+                RemoteData.Success note ->
+                    View.appShellSidebar
+                        { navigation = []
+                        , main =
+                            [ View.renderedDocument
+                                { title = note.noteName
+                                , markdownContent = note.noteData
+                                }
+                            ]
+                        }
 
-viewRecentNote : MarkdownNoteRef -> Html Msg
-viewRecentNote note =
+                _ ->
+                    -- TODO
+                    View.appShellSidebar
+                        { navigation = []
+                        , main = []
+                        }
+
+
+viewRecentNote : String -> MarkdownNoteRef -> Html Msg
+viewRecentNote username note =
     View.referencedNoteCard
         { label = note.name
-        , link = "" -- TODO
+        , link = Routes.toLink (Routes.Viewer (Routes.ViewerGardenNote username note.name))
         , styles = []
         }

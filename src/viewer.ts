@@ -3,6 +3,7 @@ import { Elm } from './Viewer.elm'
 import * as dataRoot from 'webnative/data-root'
 import { getLinks } from "webnative/fs/protocol/basic"
 import PublicTree from "webnative/fs/v1/PublicTree"
+import PublicFile from "webnative/fs/v1/PublicFile"
 
 const elmApp = Elm.Viewer.init({
     flags: {}
@@ -28,6 +29,25 @@ elmApp.ports.loadNotesFor.subscribe(async ({ username }: { username: string }) =
         elmApp.ports.loadedNotesFor.send({
             username,
             notes: entriesWithMetadata,
+        })
+    } catch (e) {
+        console.error(e)
+    }
+})
+
+elmApp.ports.loadNote.subscribe(async ({ username, noteName } : { username : string, noteName : string }) => {
+    try {
+        const path = ["Documents", "Notes", `${noteName}.md`]
+        const rootCID = await dataRoot.lookup(username)
+        const publicCid = (await getLinks(rootCID)).public.cid
+
+        const publicTree = await PublicTree.fromCID(publicCid)
+        const noteFile = await publicTree.read(path) as PublicFile
+        console.log("Read file", noteFile)
+        const noteData = new TextDecoder().decode(noteFile.content as Uint8Array)
+        elmApp.ports.loadedNote.send({
+            username,
+            note: { noteName, noteData }
         })
     } catch (e) {
         console.error(e)
