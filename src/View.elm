@@ -124,7 +124,10 @@ appShellSidebar element =
             , flex_row
             , flex_grow
             , flex_shrink_0
+            , items_start
+            , h_0
             , overflow_x_auto
+            , overflow_y_auto
             , Css.property "scroll-snap-type" "x mandatory"
             ]
         ]
@@ -134,10 +137,14 @@ appShellSidebar element =
                 , py_6
                 , flex_shrink_0
                 , Css.property "scroll-snap-align" "start"
-                , overflow_y_auto
                 , flex
                 , flex_col
-                , max_h_screen
+                , sticky
+                , top_0
+                , h_screen
+
+                -- , overflow_y_auto
+                -- , max_h_screen
                 , xl
                     [ Css.property "margin-left" "calc(50vw - 16rem - 384px)"
                     ]
@@ -166,8 +173,9 @@ appShellSidebar element =
                 , h_full
                 , w_screen
                 , Css.property "scroll-snap-align" "start"
-                , overflow_y_auto
-                , max_h_screen
+
+                -- , overflow_y_auto
+                -- , max_h_screen
                 , sm
                     [ w_auto
                     , flex_shrink
