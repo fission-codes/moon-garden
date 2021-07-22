@@ -1,10 +1,11 @@
-module Main exposing (main)
+module Editor exposing (main)
 
 import Browser
 import Browser.Navigation as Navigation
+import Common exposing (MarkdownNoteRef, WNFSEntry)
 import Dict exposing (Dict)
 import Html.Styled as Html exposing (Html)
-import Json.Decode as D exposing (Decoder)
+import Json.Decode as D
 import List.Extra as List
 import Maybe.Extra as Maybe
 import Ports
@@ -73,7 +74,7 @@ type PersistState
 type Msg
     = NoOp -- FIXME Replace the need for this
     | UrlChanged Url
-    | LinkClicked Browser.UrlRequest
+    | LinkClicked (Routes.UrlRequest Routes.EditorRoute)
     | WebnativeSignIn
     | WebnativeInit (Maybe { username : String })
     | UpdateTitleBuffer String
@@ -108,7 +109,7 @@ main =
         , subscriptions = subscriptions
         , view = view
         , onUrlChange = UrlChanged
-        , onUrlRequest = LinkClicked
+        , onUrlRequest = Routes.fromRequestInEditor >> LinkClicked
         }
 
 
@@ -144,12 +145,12 @@ update msg model =
 
         LinkClicked request ->
             case request of
-                Browser.External link ->
+                Routes.External link ->
                     ( model
                     , Navigation.load link
                     )
 
-                Browser.Internal url ->
+                Routes.Internal url _ ->
                     ( { model | url = url }
                     , Navigation.pushUrl model.navKey (Url.toString url)
                     )
@@ -263,7 +264,7 @@ update msg model =
                             , persistState = NotPersistedYet
                         }
                         (Navigation.pushUrl model.navKey
-                            (Routes.toLink (Routes.EditNote ""))
+                            (Routes.toLink (Routes.Editor (Routes.EditorEditNote "")))
                         )
                         |> returnEditNote authed
                         |> returnAuthed model
@@ -280,7 +281,7 @@ update msg model =
                         , searchBuffer = ""
                         }
                         (Navigation.pushUrl model.navKey
-                            (Routes.toLink (Routes.EditNote ""))
+                            (Routes.toLink (Routes.Editor (Routes.EditorEditNote "")))
                         )
                         |> returnEditNote authed
                         |> returnAuthed model
@@ -377,8 +378,8 @@ handleUrlChange : Model -> Return Msg Model
 handleUrlChange model =
     updateAuthed
         (\authed ->
-            case Routes.parse model.url of
-                Just (Routes.EditNote name) ->
+            case Routes.fromUrl model.url of
+                Routes.Editor (Routes.EditorEditNote name) ->
                     Return.return
                         { authed
                             | state =
@@ -402,7 +403,7 @@ handleUrlChange model =
                         (Ports.loadNote name)
                         |> returnAuthed model
 
-                _ ->
+                Routes.Editor Routes.EditorDashboard ->
                     { authed
                         | state =
                             Dashboard
@@ -411,6 +412,19 @@ handleUrlChange model =
                     }
                         |> Return.singleton
                         |> returnAuthed model
+
+                Routes.Viewer viewerRoute ->
+                    model
+                        |> Return.singleton
+                        |> Return.effect_
+                            (\_ ->
+                                Cmd.batch
+                                    -- If someone types /viewer in the url, this will change it to /viewer/ and load the correct route
+                                    -- without adding another history entry. This prevents a reload-loop when trying to go back in history once
+                                    [ Navigation.replaceUrl model.navKey (Routes.toLink (Routes.Viewer viewerRoute))
+                                    , Navigation.reload
+                                    ]
+                            )
         )
         model
 
@@ -462,7 +476,7 @@ subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.batch
         [ Ports.webnativeInit WebnativeInit
-        , Ports.loadedNotesLs (withDecoding (D.dict decodeWNFSEntry) LoadedNotes)
+        , Ports.loadedNotesLs (Common.withDecoding (D.dict Common.decodeWNFSEntry) LoadedNotes)
         , Ports.loadedNote LoadedNote
         , Ports.persistedNote PersistedNote
         ]
@@ -524,13 +538,13 @@ viewAuthenticated model =
                         , Html.br [] []
                         , Html.text "If you come back here afterwards, you'll have a place to look at the seeds you've planted recently and a way to search through them."
                         ]
-                    , View.leafyButton { onClick = DashboardCreateNewNote, label = "Create New Note" }
+                    , View.leafyButton { onClick = Just DashboardCreateNewNote, label = "Create New Note", styles = [] }
                     ]
 
                  else
                     List.concat
                         [ [ View.titleText [] ("Hello, " ++ model.username)
-                          , View.leafyButton { onClick = DashboardCreateNewNote, label = "Create New Note" }
+                          , View.leafyButton { onClick = Just DashboardCreateNewNote, label = "Create New Note", styles = [] }
                           , View.searchInput
                                 { placeholder = "Search Notes"
                                 , onInput = UpdateSearchBuffer
@@ -545,8 +559,8 @@ viewAuthenticated model =
                         , [ model.notes
                                 |> Dict.values
                                 |> List.filterMap
-                                    (isMarkdownNote
-                                        >> Maybe.andThen (isNotFiltered dashboard.searchBuffer)
+                                    (Common.isMarkdownNote
+                                        >> Maybe.andThen (Common.isNotFiltered dashboard.searchBuffer)
                                     )
                                 |> List.sortBy (.modificationTime >> (*) -1)
                                 |> List.take 24
@@ -561,12 +575,13 @@ viewAuthenticated model =
                 { navigation =
                     [ View.referencedNoteCard
                         { label = "Dashboard"
-                        , link = Routes.toLink Routes.Dashboard
+                        , link = Routes.toLink (Routes.Editor Routes.EditorDashboard)
                         , styles = [ mb_8, text_center ]
                         }
                     , View.leafyButton
                         { label = "Create New Note"
-                        , onClick = CreateNewNote
+                        , onClick = Just CreateNewNote
+                        , styles = []
                         }
                     , View.searchInput
                         { placeholder = "Type to Search"
@@ -578,12 +593,12 @@ viewAuthenticated model =
                         |> List.filterMap
                             (\wnfsEntry ->
                                 wnfsEntry
-                                    |> isMarkdownNote
+                                    |> Common.isMarkdownNote
                                     |> (if note.searchBuffer == "" then
                                             identity
 
                                         else
-                                            Maybe.andThen (isNotFiltered note.searchBuffer)
+                                            Maybe.andThen (Common.isNotFiltered note.searchBuffer)
                                        )
                             )
                         |> List.sortBy (.modificationTime >> (*) -1)
@@ -631,136 +646,6 @@ viewRecentNote : MarkdownNoteRef -> Html Msg
 viewRecentNote note =
     View.referencedNoteCard
         { label = note.name
-        , link = Routes.toLink (Routes.EditNote note.name)
+        , link = Routes.toLink (Routes.Editor (Routes.EditorEditNote note.name))
         , styles = []
         }
-
-
-
--- Utilitites
-
-
-withDecoding : Decoder a -> (Result String a -> msg) -> D.Value -> msg
-withDecoding decoder toMsg json =
-    D.decodeValue decoder json
-        |> Result.mapError D.errorToString
-        |> toMsg
-
-
-type alias WNFSEntry =
-    { isFile : Bool
-    , name : String
-    , cid : String
-    , metadata :
-        { unixMeta :
-            { mtime : Int
-            , ctime : Int
-            }
-        }
-    }
-
-
-decodeWNFSEntry : Decoder WNFSEntry
-decodeWNFSEntry =
-    D.map4 WNFSEntry
-        (D.field "isFile" D.bool)
-        (D.field "name" D.string)
-        (D.field "cid" D.string)
-        (D.field "metadata" decodeMetadata)
-
-
-decodeMetadata : Decoder { unixMeta : { mtime : Int, ctime : Int } }
-decodeMetadata =
-    D.map2
-        (\mtime ctime ->
-            { unixMeta =
-                { mtime = mtime
-                , ctime = ctime
-                }
-            }
-        )
-        (D.at [ "unixMeta", "mtime" ] D.int)
-        (D.at [ "unixMeta", "ctime" ] D.int)
-
-
-
--- MarkdownNote
-
-
-type alias MarkdownNoteRef =
-    { name : String
-    , modificationTime : Int
-    , creationTime : Int
-    }
-
-
-isMarkdownNote : WNFSEntry -> Maybe MarkdownNoteRef
-isMarkdownNote entry =
-    let
-        ensureIsMarkdown ( name, extension ) =
-            -- we require lowercase "md", because we will always save as .md
-            if extension == "md" then
-                Just name
-
-            else
-                Nothing
-    in
-    if entry.isFile then
-        entry.name
-            |> splitLast "."
-            |> Maybe.andThen ensureIsMarkdown
-            |> Maybe.map
-                (\name ->
-                    { name = name
-                    , modificationTime = entry.metadata.unixMeta.mtime
-                    , creationTime = entry.metadata.unixMeta.ctime
-                    }
-                )
-
-    else
-        Nothing
-
-
-splitLast : String -> String -> Maybe ( String, String )
-splitLast needle haystack =
-    haystack
-        |> String.split needle
-        |> List.unconsLast
-        |> Maybe.map
-            (\( last, rest ) ->
-                ( rest |> String.join needle
-                , last
-                )
-            )
-
-
-isNotFiltered : String -> MarkdownNoteRef -> Maybe MarkdownNoteRef
-isNotFiltered needle markdownNote =
-    let
-        haystack =
-            String.toLower markdownNote.name
-
-        lowerNeedle =
-            String.toLower needle
-
-        stripAfterLetter needleLetter maybeHaystackRest =
-            maybeHaystackRest
-                |> Maybe.andThen
-                    (\haystackRest ->
-                        case String.indices (String.fromChar needleLetter) haystackRest of
-                            [] ->
-                                Nothing
-
-                            index :: _ ->
-                                Just (String.dropLeft (index + 1) haystackRest)
-                    )
-    in
-    if
-        lowerNeedle
-            |> String.foldl stripAfterLetter (Just haystack)
-            |> Maybe.isJust
-    then
-        Just markdownNote
-
-    else
-        Nothing

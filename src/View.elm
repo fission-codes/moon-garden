@@ -3,9 +3,11 @@ module View exposing (..)
 import Css
 import Css.Media
 import FeatherIcons
+import Html.Attributes
 import Html.Styled as Html exposing (..)
 import Html.Styled.Attributes exposing (css, href, id, placeholder, type_, value)
 import Html.Styled.Events as Events
+import Markdown
 import Tailwind.Breakpoints exposing (..)
 import Tailwind.Utilities exposing (..)
 
@@ -19,25 +21,35 @@ loadingScreen : { message : String, isError : Bool } -> Html msg
 loadingScreen element =
     appShellCentered
         [ titleText [ text_center ] appName
-        , p
-            [ css
-                [ font_body
-                , text_bluegray_700
-                , flex
-                , flex_col
-                , items_center
-                , space_y_2
-                ]
-            ]
-            [ if element.isError then
-                span [ css [ text_2xl ] ]
-                    [ text "😳" ]
+        , loadingSection
+            { styles = []
+            , isError = element.isError
+            , message = element.message
+            }
+        ]
 
-              else
-                span [ css [ text_2xl, animate_spin ] ]
-                    [ text "🌕" ]
-            , span [] [ text element.message ]
+
+loadingSection : { styles : List Css.Style, message : String, isError : Bool } -> Html msg
+loadingSection element =
+    p
+        [ css
+            [ Css.batch element.styles
+            , font_body
+            , text_bluegray_700
+            , flex
+            , flex_col
+            , items_center
+            , space_y_2
             ]
+        ]
+        [ if element.isError then
+            span [ css [ text_2xl ] ]
+                [ text "😳" ]
+
+          else
+            span [ css [ text_2xl, animate_spin ] ]
+                [ text "🌕" ]
+        , span [] [ text element.message ]
         ]
 
 
@@ -122,8 +134,15 @@ appShellSidebar element =
             , flex_row
             , flex_grow
             , flex_shrink_0
+            , items_start
+            , h_0
             , overflow_x_auto
+            , overflow_y_auto
             , Css.property "scroll-snap-type" "x mandatory"
+
+            -- Only in firefox
+            , Css.Media.withMediaQuery [ "screen and (min--moz-device-pixel-ratio:0)" ]
+                [ Css.property "scroll-snap-type" "none" ]
             ]
         ]
         [ nav
@@ -132,10 +151,11 @@ appShellSidebar element =
                 , py_6
                 , flex_shrink_0
                 , Css.property "scroll-snap-align" "start"
-                , overflow_y_auto
                 , flex
                 , flex_col
-                , max_h_screen
+                , sticky
+                , top_0
+                , h_screen
                 , xl
                     [ Css.property "margin-left" "calc(50vw - 16rem - 384px)"
                     ]
@@ -164,8 +184,9 @@ appShellSidebar element =
                 , h_full
                 , w_screen
                 , Css.property "scroll-snap-align" "start"
-                , overflow_y_auto
-                , max_h_screen
+
+                -- , overflow_y_auto
+                -- , max_h_screen
                 , sm
                     [ w_auto
                     , flex_shrink
@@ -218,6 +239,7 @@ titleText styles content =
             , text_bluegray_800
             , text_3xl
             , font_title
+            , whitespace_pre_wrap
             , sm [ text_4_dot_5xl ]
             ]
         ]
@@ -387,24 +409,29 @@ leafButtonStyle =
 
         -- button press animation
         , transform_gpu
-        , translate_y_0
+        , neg_translate_y_1
         , Css.property "transition-property" "transform box-shadow"
         , duration_100
         , Css.active
-            [ translate_y_1
+            [ translate_y_0
             , Css.property "box-shadow" "0 0 0 0 #95A25C"
             ]
         ]
 
 
-leafyButton : { label : String, onClick : msg } -> Html msg
+leafyButton : { label : String, onClick : Maybe msg, styles : List Css.Style } -> Html msg
 leafyButton element =
     button
-        [ Events.onClick element.onClick
+        [ case element.onClick of
+            Just msg ->
+                Events.onClick msg
+
+            Nothing ->
+                type_ "submit"
         , css
-            [ leafButtonStyle
+            [ Css.batch element.styles
+            , leafButtonStyle
             , py_3
-            , mb_1
             ]
         ]
         [ text element.label ]
@@ -601,3 +628,53 @@ wikilinkNew element =
                     ]
                 ]
         ]
+
+
+renderedDocument : { title : String, markdownContent : String } -> Html msg
+renderedDocument doc =
+    article
+        [ css
+            [ prose
+            ]
+        ]
+        [ h1 []
+            [ text doc.title ]
+        , Markdown.toHtml
+            [ Html.Attributes.style "display" "contents" ]
+            doc.markdownContent
+            |> fromUnstyled
+        ]
+
+
+usernameForm : { onSubmit : msg, onChangeUsername : String -> msg } -> Html msg
+usernameForm element =
+    form
+        [ Events.onSubmit element.onSubmit
+        , css
+            [ flex
+            , flex_row
+            ]
+        ]
+        [ searchInput
+            { onInput = element.onChangeUsername
+            , styles = [ flex_grow, flex_shrink ]
+            , placeholder = "e.g. boris, expede, or matheus23"
+            }
+        , leafyButton
+            { onClick = Nothing
+            , label = "Explore"
+            , styles = [ ml_2, px_6, flex_shrink_0 ]
+            }
+        ]
+
+
+link : { label : List (Html msg), location : String } -> Html msg
+link element =
+    a
+        [ href element.location
+        , css
+            [ text_bluegray_600
+            , Css.hover [ underline ]
+            ]
+        ]
+        element.label
