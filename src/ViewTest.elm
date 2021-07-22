@@ -91,7 +91,7 @@ viewEditor model =
                     (\result ->
                         View.referencedNoteCard
                             { label = result
-                            , link = "#" ++ View.appShellSidebarMainSectionId
+                            , link = ""
                             , styles = [ mt_4 ]
                             }
                     )
@@ -102,6 +102,7 @@ viewEditor model =
                     , "Geometric Algebra for Computer Science"
                     ]
                 ]
+        , mainId = ""
         , main =
             [ View.titleInput
                 { onInput = ChangeTitle
@@ -181,6 +182,7 @@ viewNote =
                     ]
                 }
             ]
+        , mainId = ""
         , main =
             [ View.renderedDocument
                 { title = "Moon Garden"

@@ -107,22 +107,15 @@ appShellCentered content =
         ]
 
 
-{-| The default scroll position for the app shell with a
-sidebar is going to be to the far left - thus you'll see
-the navigation first.
+{-| Provides an app shell with a sidebar.
 
-Thus, the main section has an 'id' set to this value.
-Use this to potentially set the scroll position or set
-the url to `something ++ #<appShellSidebarMainSectionId>`.
+Trick: Set `mainId` to your current url fragment to make the
+mobile screen scroll there automatically.
 
 -}
-appShellSidebarMainSectionId : String
-appShellSidebarMainSectionId =
-    "main"
-
-
 appShellSidebar :
     { navigation : List (Html msg)
+    , mainId : String
     , main : List (Html msg)
     }
     -> Html msg
@@ -173,8 +166,8 @@ appShellSidebar element =
                 ]
                 element.navigation
             ]
-        , section
-            [ id appShellSidebarMainSectionId
+        , main_
+            [ id element.mainId
             , css
                 [ p_6
                 , flex

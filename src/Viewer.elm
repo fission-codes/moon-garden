@@ -329,6 +329,7 @@ viewBody model =
                 RemoteData.Success note ->
                     View.appShellSidebar
                         { navigation = []
+                        , mainId = model.url.fragment |> Maybe.withDefault ""
                         , main =
                             [ View.renderedDocument
                                 { title = note.noteName
@@ -340,6 +341,7 @@ viewBody model =
                 RemoteData.Failure err ->
                     View.appShellSidebar
                         { navigation = []
+                        , mainId = model.url.fragment |> Maybe.withDefault ""
                         , main =
                             [ [ "There was an error trying to load a note for the user "
                               , gardenNote.username

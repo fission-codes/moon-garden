@@ -520,11 +520,13 @@ viewBody model =
             viewUnauthenticated unauthedState
 
         Authed authState ->
-            viewAuthenticated authState
+            viewAuthenticated
+                (model.url.fragment |> Maybe.withDefault "")
+                authState
 
 
-viewAuthenticated : Authenticated -> Html Msg
-viewAuthenticated model =
+viewAuthenticated : String -> Authenticated -> Html Msg
+viewAuthenticated urlFragment model =
     case model.state of
         Dashboard dashboard ->
             View.appShellColumn
@@ -605,6 +607,7 @@ viewAuthenticated model =
                         |> List.map viewRecentNote
                         |> View.searchResults
                     ]
+                , mainId = urlFragment
                 , main =
                     [ View.titleInput
                         { onInput = UpdateTitleBuffer
