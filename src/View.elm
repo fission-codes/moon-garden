@@ -21,25 +21,35 @@ loadingScreen : { message : String, isError : Bool } -> Html msg
 loadingScreen element =
     appShellCentered
         [ titleText [ text_center ] appName
-        , p
-            [ css
-                [ font_body
-                , text_bluegray_700
-                , flex
-                , flex_col
-                , items_center
-                , space_y_2
-                ]
-            ]
-            [ if element.isError then
-                span [ css [ text_2xl ] ]
-                    [ text "😳" ]
+        , loadingSection
+            { styles = []
+            , isError = element.isError
+            , message = element.message
+            }
+        ]
 
-              else
-                span [ css [ text_2xl, animate_spin ] ]
-                    [ text "🌕" ]
-            , span [] [ text element.message ]
+
+loadingSection : { styles : List Css.Style, message : String, isError : Bool } -> Html msg
+loadingSection element =
+    p
+        [ css
+            [ Css.batch element.styles
+            , font_body
+            , text_bluegray_700
+            , flex
+            , flex_col
+            , items_center
+            , space_y_2
             ]
+        ]
+        [ if element.isError then
+            span [ css [ text_2xl ] ]
+                [ text "😳" ]
+
+          else
+            span [ css [ text_2xl, animate_spin ] ]
+                [ text "🌕" ]
+        , span [] [ text element.message ]
         ]
 
 
@@ -146,9 +156,6 @@ appShellSidebar element =
                 , sticky
                 , top_0
                 , h_screen
-
-                -- , overflow_y_auto
-                -- , max_h_screen
                 , xl
                     [ Css.property "margin-left" "calc(50vw - 16rem - 384px)"
                     ]

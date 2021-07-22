@@ -140,6 +140,11 @@ update msg model =
                     else
                         model |> Return.singleton
 
+                ( InGarden garden, Err message ) ->
+                    { garden | notes = RemoteData.Failure message }
+                        |> (\newGarden -> { model | state = InGarden newGarden })
+                        |> Return.singleton
+
                 _ ->
                     model |> Return.singleton
 
@@ -155,8 +160,20 @@ update msg model =
                     }
                         |> Return.singleton
 
-                Err _ ->
-                    model |> Return.singleton
+                Err message ->
+                    case model.state of
+                        InGardenNote garden ->
+                            { model
+                                | state =
+                                    InGardenNote
+                                        { garden
+                                            | note = RemoteData.Failure message
+                                        }
+                            }
+                                |> Return.singleton
+
+                        _ ->
+                            model |> Return.singleton
 
 
 handleUrlChange : Model -> Return Msg Model
@@ -220,6 +237,7 @@ subscriptions model =
                         )
                         LoadedNote
                     )
+                , Ports.loadedNoteFailed (\{ message } -> LoadedNote (Err message))
                 ]
     in
     case model.state of
@@ -233,6 +251,7 @@ subscriptions model =
                         )
                         LoadedNotesFor
                     )
+                , Ports.loadedNotesForFailed (\{ message } -> LoadedNotesFor (Err message))
                 , common
                 ]
 
@@ -289,8 +308,19 @@ viewBody model =
                                 |> View.searchGrid
                             ]
 
-                        _ ->
-                            []
+                        remote ->
+                            [ View.subtitleText [ mt_8 ] "Recent Notes"
+                            , View.loadingSection
+                                { isError = RemoteData.isFailure remote
+                                , message =
+                                    if RemoteData.isFailure remote then
+                                        "Couldn't find any notes for " ++ garden.username
+
+                                    else
+                                        "Loading... 🚶"
+                                , styles = [ w_full, h_64 ]
+                                }
+                            ]
                     ]
                 )
 
@@ -307,8 +337,23 @@ viewBody model =
                             ]
                         }
 
+                RemoteData.Failure err ->
+                    View.appShellSidebar
+                        { navigation = []
+                        , main =
+                            [ [ "There was an error trying to load a note for the user "
+                              , gardenNote.username
+                              , ". The error message is:"
+                              ]
+                                |> String.concat
+                                |> Html.text
+                            , Html.pre []
+                                [ Html.text err ]
+                            ]
+                        }
+
                 _ ->
-                    -- TODO
+                    -- TODO loading screen?
                     View.appShellSidebar
                         { navigation = []
                         , main = []

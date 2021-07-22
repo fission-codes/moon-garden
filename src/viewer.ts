@@ -31,6 +31,7 @@ elmApp.ports.loadNotesFor.subscribe(async ({ username }: { username: string }) =
             notes: entriesWithMetadata,
         })
     } catch (e) {
+        elmApp.ports.loadedNotesForFailed.send({ message: e.message })
         console.error(e)
     }
 })
@@ -39,17 +40,19 @@ elmApp.ports.loadNote.subscribe(async ({ username, noteName } : { username : str
     try {
         const path = ["Documents", "Notes", `${noteName}.md`]
         const rootCID = await dataRoot.lookup(username)
+        if (rootCID == null) throw new Error("User not found")
         const publicCid = (await getLinks(rootCID)).public.cid
 
         const publicTree = await PublicTree.fromCID(publicCid)
         const noteFile = await publicTree.read(path) as PublicFile
-        console.log("Read file", noteFile)
+        if (noteFile == null) throw new Error("Note note found")
         const noteData = new TextDecoder().decode(noteFile.content as Uint8Array)
         elmApp.ports.loadedNote.send({
             username,
             note: { noteName, noteData }
         })
     } catch (e) {
+        elmApp.ports.loadedNoteFailed.send({ message: e.message })
         console.error(e)
     }
 })
