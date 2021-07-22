@@ -616,6 +616,11 @@ viewAuthenticated model =
                         , content = note.editorBuffer
                         , styles = [ View.editorTextareaStyle ]
                         }
+                    , View.link
+                        { label = [ Html.text "View Note (sharable link)" ]
+                        , location = Routes.toLink (Routes.Viewer (Routes.ViewerGardenNote model.username note.titleBuffer))
+                        }
+                    , View.spacer
 
                     -- , View.wikilinksSection
                     --     { styles = [ mt_8 ]

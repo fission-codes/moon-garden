@@ -678,3 +678,16 @@ link element =
             ]
         ]
         element.label
+
+
+spacer : Html msg
+spacer =
+    hr
+        [ css
+            [ border_none
+            , mt_8
+            , h_12
+            , flex_shrink_0
+            ]
+        ]
+        []
