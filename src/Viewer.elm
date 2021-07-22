@@ -285,7 +285,8 @@ viewBody model =
                 , View.paragraph []
                     [ Html.text "Think this is cool? You can totally "
                     , View.link
-                        { location = Routes.toLink (Routes.Editor Routes.EditorDashboard)
+                        { styles = []
+                        , location = Routes.toLink (Routes.Editor Routes.EditorDashboard)
                         , label = [ Html.text "build your own moon garden" ]
                         }
                     , Html.text " with fission."
@@ -358,6 +359,7 @@ viewBody model =
                     -- TODO loading screen?
                     View.appShellSidebar
                         { navigation = []
+                        , mainId = ""
                         , main = []
                         }
 

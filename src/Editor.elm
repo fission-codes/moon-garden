@@ -568,6 +568,11 @@ viewAuthenticated urlFragment model =
                                 |> List.take 24
                                 |> List.map viewRecentNote
                                 |> View.searchGrid
+                          , View.link
+                                { styles = [ mt_8 ]
+                                , label = [ Html.text "View your publicly sharable garden" ]
+                                , location = Routes.toLink (Routes.Viewer (Routes.ViewerGarden model.username))
+                                }
                           ]
                         ]
                 )
@@ -620,7 +625,8 @@ viewAuthenticated urlFragment model =
                         , styles = [ View.editorTextareaStyle ]
                         }
                     , View.link
-                        { label = [ Html.text "View Note (sharable link)" ]
+                        { styles = [ mt_8 ]
+                        , label = [ Html.text "View Note (sharable link)" ]
                         , location = Routes.toLink (Routes.Viewer (Routes.ViewerGardenNote model.username note.titleBuffer))
                         }
                     , View.spacer

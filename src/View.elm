@@ -661,12 +661,13 @@ usernameForm element =
         ]
 
 
-link : { label : List (Html msg), location : String } -> Html msg
+link : { label : List (Html msg), location : String, styles : List Css.Style } -> Html msg
 link element =
     a
         [ href element.location
         , css
-            [ text_bluegray_600
+            [ Css.batch element.styles
+            , text_bluegray_600
             , Css.hover [ underline ]
             ]
         ]
